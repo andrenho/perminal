@@ -5,7 +5,7 @@
 # sources
 # 
 
-SRC=main.cc			\
+SRC=$(wildcard *.cc)		\
     $(wildcard client/*.cc) 	\
     $(wildcard server/*.cc)
 

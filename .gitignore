@@ -31,3 +31,6 @@ perminal
 
 # Vim stuff
 .*.swp
+
+# Valgrind
+*.supp
