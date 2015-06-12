@@ -10,7 +10,7 @@ public:
     Config(int argc, char** argv); 
     virtual ~Config() {}
 
-    enum { SERVER, CLIENT, DUAL } InitializationType = DUAL;
+    enum { SERVER, CLIENT, DUAL } InitializationType = CLIENT;
 
 private:
     Config(Config const&) = delete;

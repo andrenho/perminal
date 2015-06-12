@@ -4,6 +4,7 @@
 #define CLIENT_CLIENT_H_
 
 #include <string>
+#include <vector>
 using namespace std;
 
 class Config;
@@ -14,6 +15,9 @@ class Client {
 public:
     Client(Config const& config, string const& hostname, string const& backend); 
     virtual ~Client() {}
+    
+    vector<uint8_t> Read() const;
+
 private:
     Config const& config;
 

@@ -11,12 +11,14 @@ namespace client {
 
 class RendererCurses : public Renderer {
 public:
-    RendererCurses(Config const& config, ClientCharMatrix const& matrix);
-    virtual ~RendererCurses() {}
+    RendererCurses(Config const& config, ClientCharMatrix& matrix);
+    virtual ~RendererCurses();
 
     void Execute() override;
     
 private:
+    void UpdateFromMatrix();
+
     RendererCurses(RendererCurses const&) = delete;
     RendererCurses(RendererCurses&&) = delete;
     RendererCurses& operator=(RendererCurses const&) = delete;

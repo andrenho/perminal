@@ -18,11 +18,11 @@ public:
     virtual void Execute() = 0;
 
 protected:
-    Renderer(Config const& config, ClientCharMatrix const& matrix)
+    Renderer(Config const& config, ClientCharMatrix& matrix)
         : config(config), matrix(matrix) {}
 
     Config const& config;
-    ClientCharMatrix const& matrix;
+    ClientCharMatrix& matrix;
 
 private:
     Renderer(Renderer const&) = delete;

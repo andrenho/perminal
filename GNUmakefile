@@ -14,11 +14,11 @@ SRC=$(wildcard *.cc)		\
 #
 
 # libraries
-#CPPFLAGS += `pkg-config --cflags sdl2 SDL2_ttf` 
-#LDFLAGS += `pkg-config --libs sdl2 SDL2_ttf` -lBox2D -llua
+CPPFLAGS += `pkg-config --cflags ncurses`
+LDFLAGS += `pkg-config --libs ncurses`
 
 # header directory
-CPPFLAGS += -Iclient -Iserver
+CPPFLAGS += -I. -Iclient -Iserver
 
 # default compilation options
 CPPFLAGS += -fdiagnostics-color=auto -pipe -std=c++1y -DVERSION=${VERSION} -fPIC -MMD -MP
