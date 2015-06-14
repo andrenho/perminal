@@ -54,12 +54,9 @@ Features:
 
 ARCHITECTURE
 ------------
-Computer <--> Plugin <--> Terminal <--> ServerCharMatrix <--> <<<<>>>>
-                        (if printer)
+<-- Plugin <--> Terminal <--> CharMatrix <--> Renderer (+audio, +input)
+              (if printer)
 
-                             <-- Input (Mouse/Keyboard)
-<<<>>>> <-- ClientCharMatrix <--> Renderer
-              |               --> Audio 
-              `--> ResourceManager
+ResourceManager
 
 Terminal types: matrix, printer

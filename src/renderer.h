@@ -1,28 +1,30 @@
 // Copyright 2015 André Wagner
 
-#ifndef CLIENT_RENDERER_H_
-#define CLIENT_RENDERER_H_
+#ifndef RENDERER_H_
+#define RENDERER_H_
 
 using namespace std;
 
 class Config;
-
-namespace client {
-
-class ClientCharMatrix;
+class ConsolePlugin;
+class Terminal;
 
 class Renderer {
 public:
     virtual ~Renderer() {}
 
-    virtual void Execute() = 0;
+    void SendInputToPlugin(ConsolePlugin const& plugin) const {}  // TODO
+    void UpdateFromTerminal(Terminal const& terminal) {}  // TODO
+    void Update() const {}  // TODO
 
 protected:
-    Renderer(Config const& config, ClientCharMatrix& matrix)
-        : config(config), matrix(matrix) {}
+    Renderer(Config const& config)
+        : config(config) {}
+
+    virtual void SetChar(int x, int y, char ch) = 0;
+    virtual void Refresh() = 0;
 
     Config const& config;
-    ClientCharMatrix& matrix;
 
 private:
     Renderer(Renderer const&) = delete;
@@ -38,8 +40,6 @@ class Renderer {
 }
 @*/
 
-}  // namespace client
-
-#endif  // CLIENT_RENDERER_H_
+#endif  // RENDERER_H_
 
 // vim: ts=4:sw=4:sts=4:expandtab

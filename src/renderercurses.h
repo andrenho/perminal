@@ -1,24 +1,21 @@
 // Copyright 2015 André Wagner
 
-#ifndef CLIENT_RENDERERCURSES_H_
-#define CLIENT_RENDERERCURSES_H_
+#ifndef RENDERERCURSES_H_
+#define RENDERERCURSES_H_
 
 #include "renderer.h"
 
 using namespace std;
 
-namespace client {
-
 class RendererCurses : public Renderer {
 public:
-    RendererCurses(Config const& config, ClientCharMatrix& matrix);
+    RendererCurses(Config const& config);
     virtual ~RendererCurses();
 
-    void Execute() override;
-    
-private:
-    void UpdateFromMatrix();
+    void SetChar(int x, int y, char ch) override;
+    void Refresh() override;
 
+private:
     RendererCurses(RendererCurses const&) = delete;
     RendererCurses(RendererCurses&&) = delete;
     RendererCurses& operator=(RendererCurses const&) = delete;
@@ -32,8 +29,6 @@ class RendererCurses {
 }
 @*/
 
-}  // namespace client
-
-#endif  // CLIENT_RENDERERCURSES_H_
+#endif  // RENDERERCURSES_H_
 
 // vim: ts=4:sw=4:sts=4:expandtab

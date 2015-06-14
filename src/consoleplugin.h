@@ -1,19 +1,21 @@
 // Copyright 2015 André Wagner
 
-#ifndef SERVER_CONSOLEPLUGIN_H_
-#define SERVER_CONSOLEPLUGIN_H_
+#ifndef CONSOLEPLUGIN_H_
+#define CONSOLEPLUGIN_H_
 
 #include <string>
 using namespace std;
 
 class Config;
-
-namespace server {
+class Terminal;
 
 class ConsolePlugin {
 public:
     ConsolePlugin(Config const& config, string const& plugin_file);
     virtual ~ConsolePlugin() {}
+
+    void SendTextToTerminal(Terminal const& terminal) {}  // TODO
+
 private:
     Config const& config;
 
@@ -29,8 +31,6 @@ class ConsolePlugin {
     +ConsolePlugin()
 }
 @*/
-
-}  // namespace server
 
 #endif  // SERVER_CONSOLEPLUGIN_H_
 

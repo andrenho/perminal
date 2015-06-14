@@ -5,9 +5,7 @@
 # sources
 # 
 
-SRC=$(wildcard *.cc)		\
-    $(wildcard client/*.cc) 	\
-    $(wildcard server/*.cc)
+SRC=$(wildcard src/*.cc)
 
 #
 # compilation options
