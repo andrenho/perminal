@@ -23,7 +23,9 @@ impl<'a> Terminal<'a> {
         }
     }
 
-    pub fn is_alive(&self) -> bool { self.active.get() && self.plugin.is_alive() }
+    pub fn is_alive(&self) -> bool { 
+        self.active.get() && self.plugin.is_alive() 
+    }
 
     pub fn send(&self, e: &UserEvent) -> Result<(), &'static str> {
         match e {
@@ -50,6 +52,7 @@ impl<'a> Terminal<'a> {
                 Err(s) => panic!(s),
             }
         }
+        self.matrix.update_cursor();
     }
 }
 

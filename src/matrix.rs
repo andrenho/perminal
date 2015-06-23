@@ -10,7 +10,8 @@ pub struct Matrix {
     pub w: u16,
     pub h: u16,
     pub cells: HashMap<(u16,u16), CharCell>,
-    cursor: (u16, u16),
+    pub cursor_on: bool,
+    pub cursor: (u16, u16),
     dirty: Vec<(u16,u16)>,
 }
 
@@ -19,12 +20,13 @@ impl Matrix {
         let mut m = Matrix {
             w: w,
             h: h,
-            cursor: (0, 0),
             cells: HashMap::new(),
+            cursor: (0, 0),
+            cursor_on: true,
             dirty: vec![],
         };
-        for x in 0..(w-1) {
-            for y in 0..(h-1) {
+        for x in 0..w {
+            for y in 0..h {
                 m.cells.insert((x,y), CharCell { c: ' ' });
             }
         }
@@ -43,7 +45,12 @@ impl Matrix {
 
     pub fn dirty(&mut self) -> Vec<(u16, u16)> {
         let c = self.dirty.clone();
+        self.dirty.clear();
         c
+    }
+
+    pub fn update_cursor(&self) {
+        // TODO - timing function to blink cursor
     }
 
     fn set_char(&mut self, cursor: &(u16, u16), c: char) {
@@ -52,12 +59,20 @@ impl Matrix {
                 cell.c = c;
                 self.dirty.push(*cursor);
             }
-            _ => panic!("Invalid cursor value!"),
+            _ => unreachable!()
         }
     }
 
-    fn advance_cursor(&mut self) {
+    fn advance_cursor(&mut self) -> (u16, u16) {
         self.cursor.0 += 1;
+        if self.cursor.0 >= self.w {
+            self.cursor.0 = 0;
+            self.cursor.1 += 1;
+        }
+        if self.cursor.1 >= self.h {
+            unimplemented!();  // TODO - skip one line
+        }
+        (self.cursor.0, self.cursor.1)
     }
 }
 

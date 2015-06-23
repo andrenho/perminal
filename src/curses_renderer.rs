@@ -17,7 +17,7 @@ impl CursesRenderer {
         noecho();
         keypad(stdscr, true);
         timeout(-1);
-        curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+        curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
         refresh();
         CursesRenderer
     }
@@ -45,6 +45,11 @@ impl Renderer for CursesRenderer {
             let y = dirty.1;
             mvaddch(y as i32, x as i32, matrix.cells[&(x, y)].c as u32);
         }
+        match matrix.cursor_on {
+            true  => { curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE); () },
+            false => { curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE); () },
+        }
+        wmove(stdscr, matrix.cursor.1 as i32, matrix.cursor.0 as i32);
         refresh();
     }
 }
