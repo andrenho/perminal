@@ -1,0 +1,7 @@
+[package]
+name = "perminal"
+version = "0.1.0"
+authors = ["André Wagner <andre.nho@gmail.com>"]
+
+[dependencies]
+ncurses = "5.73.0"
