@@ -2,6 +2,7 @@
 name = "perminal"
 version = "0.1.0"
 dependencies = [
+ "libc 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "ncurses 5.73.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

@@ -46,10 +46,16 @@ impl Renderer for CursesRenderer {
     }
 
     fn update(&self, matrix: &mut Matrix) {
+        // hack because mvaddch signature is different in x86 and i64
+        #[cfg(target_pointer_width = "32")]
+        fn ch(x: u16, y: u16, c: char) { mvaddch(y as i32, x as i32, c as u32); }
+        #[cfg(target_pointer_width = "64")]
+        fn ch(x: u16, y: u16, c: char) { mvaddch(y as i32, x as i32, c as u64); }
+
         for dirty in matrix.dirty().iter() {
             let x = dirty.0;
             let y = dirty.1;
-            mvaddch(y as i32, x as i32, matrix.cells[&(x, y)].c as u64);
+            ch(x, y, matrix.cells[&(x, y)].c);
         }
         match matrix.cursor_on {
             true  => { curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE); () },
