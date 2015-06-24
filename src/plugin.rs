@@ -1,6 +1,15 @@
+use std::io::Error;
+
+#[derive(Debug)]
+pub enum TerminalError {
+    NoData,
+    EOF,
+    Unexpected(Error)
+}
+
 pub trait Plugin {
-    fn get(&self) -> Result<char, &'static str>;
-    fn send(&self, c: char) -> Result<(), &'static str>;
+    fn get(&self) -> Result<u8, TerminalError>;
+    fn send(&self, c: u8) -> Result<(), TerminalError>;
     fn is_alive(&self) -> bool;
 }
 

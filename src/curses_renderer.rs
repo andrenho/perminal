@@ -16,7 +16,7 @@ impl CursesRenderer {
         cbreak();
         noecho();
         keypad(stdscr, true);
-        timeout(-1);
+        timeout(0);
         curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
         refresh();
         CursesRenderer
@@ -35,8 +35,7 @@ impl Renderer for CursesRenderer {
                 vec![KeyPress { key: F12, control: false, shift: false, alt: false }]
             },
             10 => {
-                vec![KeyPress { key: Char(13 as char), control: false, shift: false, alt: false },
-                     KeyPress { key: Char(10 as char), control: false, shift: false, alt: false }]
+                vec![KeyPress { key: Char(13 as char), control: false, shift: false, alt: false }]
             },
             c @ 32...128 => {
                 vec![KeyPress { key: Char(c as u8 as char), control: false, shift: false, alt: false }]

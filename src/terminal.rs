@@ -1,6 +1,7 @@
 use std::cell::Cell;
+use std::io::Error;
 
-use plugin::Plugin;
+use plugin::*;
 use userevent::UserEvent;
 use userevent::UserEvent::*;
 use userevent::Key;
@@ -26,12 +27,19 @@ impl<'a> Terminal<'a> {
         self.active.get() && self.plugin.is_alive() 
     }
 
-    pub fn input(&self, e: &UserEvent) -> Result<(), &'static str> {
+    pub fn user_input(&self, e: &UserEvent) -> Result<(), Error> {
         match e {
             &KeyPress { ref key, .. } => {
                 match key {
                     &Key::F12 => { self.active.set(false); Ok(()) }
-                    &Key::Char(k) => self.plugin.send(k),
+                    &Key::Char(k) => { self.plugin.send(k as u8); Ok(()) }
+                    /* TODO - match self.plugin.send(k as u8) {
+                        Ok(_) => Ok(()),
+                        Err(e) => match e {
+                            TerminalError::Unexpected(ex) => Err(ex),
+                            _ => unreachable!(),
+                        }
+                    } */
                 }
             },
             // Event::KeyRelease(_) => Ok(()),
@@ -46,11 +54,15 @@ impl<'a> Terminal<'a> {
                         0 => break,
                         10 => self.matrix.execute(LineFeed),
                         13 => self.matrix.execute(CarriageReturn),
-                        c @ 32...255 => self.matrix.execute(PrintChar(c as char)),
+                        c @ 1...255 => self.matrix.execute(PrintChar(c as char)),
                         _ => panic!("Invalid value!"),
                     }
                 },
-                Err(s) => panic!(s),
+                Err(e) => match e {
+                    TerminalError::NoData        => break,
+                    TerminalError::EOF           => break,
+                    TerminalError::Unexpected(e) => panic!(e),
+                }
             }
         }
         self.matrix.update_cursor();

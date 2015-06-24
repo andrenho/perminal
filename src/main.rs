@@ -1,7 +1,6 @@
 mod plugin;
 // mod echo;
 mod pty;
-mod ptyplugin;
 mod terminal;
 mod renderer;
 mod curses_renderer;
@@ -13,7 +12,7 @@ use renderer::Renderer;
 use curses_renderer::CursesRenderer;
 
 fn main() {
-    let plugin = ptyplugin::PTYPlugin::new();
+    let plugin = pty::PTY::new();
     let mut terminal = terminal::Terminal::new(&plugin);
     let renderer = curses_renderer::CursesRenderer::new();
 
@@ -21,7 +20,7 @@ fn main() {
 
         // user input
         for k in renderer.get_user_input().iter() {
-            match terminal.input(k) {
+            match terminal.user_input(k) {
                 Ok(_) => (),
                 Err(msg) => panic!(msg),
             }
