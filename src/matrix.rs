@@ -2,8 +2,13 @@ use command::Command;
 use command::Command::*;
 use std::collections::HashMap;
 
+#[derive(Clone,Copy)]
+pub struct Attributes;
+
+#[derive(Clone,Copy)]
 pub struct CharCell {
     pub c: char,
+    pub attr: Attributes,
 }
 
 pub struct Matrix {
@@ -13,6 +18,7 @@ pub struct Matrix {
     pub cursor_on: bool,
     pub cursor: (u16, u16),
     dirty: Vec<(u16,u16)>,
+    current_attribute: Attributes,
 }
 
 impl Matrix {
@@ -24,10 +30,11 @@ impl Matrix {
             cursor: (0, 0),
             cursor_on: true,
             dirty: vec![],
+            current_attribute: Attributes,
         };
         for x in 0..w {
             for y in 0..h {
-                m.cells.insert((x,y), CharCell { c: ' ' });
+                m.cells.insert((x,y), CharCell { c: ' ', attr: m.current_attribute.clone() });
             }
         }
         m
@@ -37,42 +44,58 @@ impl Matrix {
         match cmd {
             PrintChar(c) => {
                 let cursor = self.cursor;
-                self.set_char(&cursor, c);
+                let attr = self.current_attribute;
+                self.set_char(&cursor, CharCell { c: c, attr: attr.clone() });
                 self.advance_cursor();
             },
+            LineFeed => { self.advance_cursor_line(); }
+            CarriageReturn => { self.cursor.0 = 0; }
         }
     }
 
     pub fn dirty(&mut self) -> Vec<(u16, u16)> {
-        let c = self.dirty.clone();
+        let drt = self.dirty.clone();
         self.dirty.clear();
-        c
+        drt
     }
 
     pub fn update_cursor(&self) {
         // TODO - timing function to blink cursor
     }
 
-    fn set_char(&mut self, cursor: &(u16, u16), c: char) {
-        match self.cells.get_mut(cursor) {
-            Some(cell) => { 
-                cell.c = c;
-                self.dirty.push(*cursor);
-            }
-            _ => unreachable!()
-        }
+    fn set_char(&mut self, cursor: &(u16, u16), c: CharCell) {
+        self.cells.insert(*cursor, c);
+        self.dirty.push(*cursor);
     }
 
-    fn advance_cursor(&mut self) -> (u16, u16) {
+    fn advance_cursor(&mut self) {
         self.cursor.0 += 1;
         if self.cursor.0 >= self.w {
             self.cursor.0 = 0;
-            self.cursor.1 += 1;
+            self.advance_cursor_line();
         }
+    }
+
+    fn advance_cursor_line(&mut self) {
+        self.cursor.1 += 1;
         if self.cursor.1 >= self.h {
-            unimplemented!();  // TODO - skip one line
+            self.scroll_up();
         }
-        (self.cursor.0, self.cursor.1)
+    }
+
+    fn scroll_up(&mut self) {
+        for y in 1..self.h {
+            for x in 0..self.w {
+                let c = self.cells[&(x,y)];
+                self.set_char(&(x,y-1), c);
+            }
+        }
+        let h = self.h;
+        let c = CharCell { c: ' ', attr: self.current_attribute };
+        for x in 0..self.w {
+            self.set_char(&(x,h-1), c);
+        }
+        self.cursor.1 -= 1;
     }
 }
 

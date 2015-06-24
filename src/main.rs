@@ -19,7 +19,7 @@ fn main() {
 
         // user input
         for k in renderer.get_user_input().iter() {
-            match terminal.send(k) {
+            match terminal.input(k) {
                 Ok(_) => (),
                 Err(msg) => panic!(msg),
             }

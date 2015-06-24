@@ -11,7 +11,6 @@ pub struct Terminal<'a> {
     pub matrix: Matrix,
     plugin: &'a (Plugin + 'a),
     active: Cell<bool>,
-    // current: Cell<Vec<char>>,
 }
 
 impl<'a> Terminal<'a> {
@@ -27,7 +26,7 @@ impl<'a> Terminal<'a> {
         self.active.get() && self.plugin.is_alive() 
     }
 
-    pub fn send(&self, e: &UserEvent) -> Result<(), &'static str> {
+    pub fn input(&self, e: &UserEvent) -> Result<(), &'static str> {
         match e {
             &KeyPress { ref key, .. } => {
                 match key {
@@ -45,7 +44,9 @@ impl<'a> Terminal<'a> {
                 Ok(c) => {
                     match c as u8 {
                         0 => break,
-                        c @ 1...255 => self.matrix.execute(PrintChar(c as char)),
+                        10 => self.matrix.execute(LineFeed),
+                        13 => self.matrix.execute(CarriageReturn),
+                        c @ 32...255 => self.matrix.execute(PrintChar(c as char)),
                         _ => panic!("Invalid value!"),
                     }
                 },
