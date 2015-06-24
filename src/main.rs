@@ -1,6 +1,7 @@
 mod plugin;
 // mod echo;
 mod pty;
+mod ptyplugin;
 mod terminal;
 mod renderer;
 mod curses_renderer;
@@ -12,7 +13,7 @@ use renderer::Renderer;
 use curses_renderer::CursesRenderer;
 
 fn main() {
-    let plugin = pty::PTY::new();
+    let plugin = ptyplugin::PTYPlugin::new();
     let mut terminal = terminal::Terminal::new(&plugin);
     let renderer = curses_renderer::CursesRenderer::new();
 
