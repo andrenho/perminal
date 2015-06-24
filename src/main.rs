@@ -1,6 +1,7 @@
 mod plugin;
-// mod echo;
 mod pty;
+mod termcap;
+mod termcap_linux;
 mod terminal;
 mod renderer;
 mod curses_renderer;
@@ -13,7 +14,7 @@ use curses_renderer::CursesRenderer;
 
 fn main() {
     let plugin = pty::PTY::new();
-    let mut terminal = terminal::Terminal::new(&plugin);
+    let mut terminal = terminal::Terminal::new(&plugin, "linux");
     let renderer = curses_renderer::CursesRenderer::new();
 
     while terminal.is_alive() && renderer.is_running() {

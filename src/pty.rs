@@ -28,6 +28,7 @@ use std::cell::Cell;
 
 use plugin::*;
 
+#[allow(dead_code)]
 pub struct PTY {
     pid: pid_t,
     fd: c_int,

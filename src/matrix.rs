@@ -40,16 +40,16 @@ impl Matrix {
         m
     }
 
-    pub fn execute(&mut self, cmd: Command) {
+    pub fn execute(&mut self, cmd: &Command) {
         match cmd {
-            PrintChar(c) => {
+            &PrintChar(c) => {
                 let cursor = self.cursor;
                 let attr = self.current_attribute;
                 self.set_char(&cursor, CharCell { c: c, attr: attr.clone() });
                 self.advance_cursor();
             },
-            LineFeed => { self.advance_cursor_line(); }
-            CarriageReturn => { self.cursor.0 = 0; }
+            &LineFeed => { self.advance_cursor_line(); }
+            &CarriageReturn => { self.cursor.0 = 0; }
         }
     }
 
