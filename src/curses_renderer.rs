@@ -54,7 +54,7 @@ impl Renderer for CursesRenderer {
         for dirty in matrix.dirty().iter() {
             let x = dirty.0;
             let y = dirty.1;
-            ch(x, y, match matrix.cells[&(x, y)].c as u32 {
+            ch(x, y, match matrix.cells[&(x, y)].c as u64 {
                 127 => ACS_STERLING(),
                 c @ 32...255 => c,
                 27 => ACS_DIAMOND(),
