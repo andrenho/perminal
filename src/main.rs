@@ -1,7 +1,7 @@
 mod plugin;
 mod pty;
 mod termcap;
-mod termcap_linux;
+mod termcap_xterm256;
 mod terminal;
 mod renderer;
 mod curses_renderer;
@@ -14,7 +14,7 @@ use curses_renderer::CursesRenderer;
 
 fn main() {
     let plugin = pty::PTY::new();
-    let mut terminal = terminal::Terminal::new(&plugin, "linux");
+    let mut terminal = terminal::Terminal::new(&plugin);
     let renderer = curses_renderer::CursesRenderer::new();
 
     while terminal.is_alive() && renderer.is_running() {

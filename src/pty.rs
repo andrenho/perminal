@@ -47,7 +47,7 @@ impl PTY {
             -1 => panic!("Invalid return from forkpty!"),
             0  => {
                 // child
-                // TODO - set environment variables
+                env::set_var("TERM", "xterm-256color");
                 unsafe {
                     let shell = CString::new(shell).unwrap();
                     let mut argv = vec![CString::new("sh").unwrap().as_ptr()];
@@ -112,6 +112,7 @@ impl Plugin for PTY {
         self.alive.get()
     }
     
+    fn term(&self) -> &str { "xterm-256color" }
 }
 
 

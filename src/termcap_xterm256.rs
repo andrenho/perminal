@@ -2,17 +2,17 @@ use termcap::Termcap;
 use command::Command;
 use command::Command::*;
 
-pub struct TermcapLinux;
+pub struct TermcapXterm256;
 
-impl TermcapLinux {
+impl TermcapXterm256 {
 
-    pub fn new() -> TermcapLinux {
-        TermcapLinux
+    pub fn new() -> TermcapXterm256 {
+        TermcapXterm256
     }
 
 }
 
-impl Termcap for TermcapLinux {
+impl Termcap for TermcapXterm256 {
     fn parse(&self, c: u8) -> Vec<Command> {
         match c {
             0 => vec![],

@@ -7,7 +7,7 @@ use userevent::UserEvent::*;
 use userevent::Key;
 use matrix::Matrix;
 use termcap::Termcap;
-use termcap_linux::TermcapLinux;
+use termcap_xterm256::TermcapXterm256;
 
 pub struct Terminal<'a> {
     pub matrix: Matrix,
@@ -18,12 +18,12 @@ pub struct Terminal<'a> {
 
 impl<'a> Terminal<'a> {
 
-    pub fn new(plugin: &'a Plugin, term_variable: &'a str) -> Terminal<'a> { 
+    pub fn new(plugin: &'a Plugin) -> Terminal<'a> { 
         Terminal { 
             matrix: Matrix::new(80, 25),  // TODO - size
             plugin: plugin, 
             active: Cell::new(true),
-            termcap: Terminal::termcap(term_variable),
+            termcap: Terminal::termcap(plugin.term()),
         }
     }
 
@@ -57,16 +57,7 @@ impl<'a> Terminal<'a> {
     pub fn parse_plugin_output(&mut self) {
         loop {
             let commands = match self.plugin.get() {
-                Ok(c) => self.termcap.parse(c),
-                /*{
-                    match c as u8 {
-                        0 => vec!,
-                        10 => self.matrix.execute(LineFeed),
-                        13 => self.matrix.execute(CarriageReturn),
-                        c @ 1...255 => self.matrix.execute(PrintChar(c as char)),
-                        _ => panic!("Invalid value!"),
-                    }
-                },*/
+                Ok(c)  => self.termcap.parse(c),
                 Err(e) => match e {
                     TerminalError::Unexpected(e) => panic!(e),
                     _ => break,
@@ -82,7 +73,7 @@ impl<'a> Terminal<'a> {
 
     fn termcap(s: &str) -> Box<Termcap> {
         match s {
-            "linux" => Box::new(TermcapLinux::new()),
+            "xterm-256color" => Box::new(TermcapXterm256::new()),
             s => panic!("Invalid terminal type '{}'", s)
         }
     }
