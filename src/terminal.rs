@@ -1,4 +1,5 @@
 use std::cell::Cell;
+use std::cell::RefCell;
 use std::io::Error;
 
 use config::Config;
@@ -10,23 +11,26 @@ use matrix::Matrix;
 use terminfo::Terminfo;
 use terminfo_xterm256::TerminfoXterm256;
 
-pub struct Terminal<'a> {
+pub struct Terminal<'a, T: Plugin> {
     pub matrix: Matrix,
     cfg: &'a Config,
-    plugin: &'a (Plugin + 'a),
-    active: Cell<bool>,
+    plugin: T,
     terminfo: Box<Terminfo>,
+    active: Cell<bool>,
+    debug: RefCell<String>,
 }
 
-impl<'a> Terminal<'a> {
+impl<'a, T:Plugin> Terminal<'a, T> {
 
-    pub fn new(cfg: &'a Config, plugin: &'a Plugin) -> Terminal<'a> { 
+    pub fn new(cfg: &'a Config, plugin: T) -> Terminal<T> { 
+        let term = plugin.term();
         Terminal { 
             matrix: Matrix::new(80, 25),  // TODO - size
             cfg: cfg,
             plugin: plugin, 
             active: Cell::new(true),
-            terminfo: Terminal::terminfo(plugin.term()),
+            terminfo: Terminal::<T>::terminfo(term),
+            debug: RefCell::new(String::new()),
         }
     }
 
@@ -46,6 +50,9 @@ impl<'a> Terminal<'a> {
                     /* The rest of the keys, that'll be sent
                        to the plugin */
                     key @ _ => {
+                        if let &Key::Char(c) = key { 
+                            self.debug('+', c as u8);
+                        }
                         for k in self.terminfo.parse_input(key) {
                             match self.plugin.send(k) {
                                 Err(e) => match e {
@@ -67,7 +74,10 @@ impl<'a> Terminal<'a> {
     pub fn parse_plugin_output(&mut self) {
         loop {
             let commands = match self.plugin.get() {
-                Ok(c)  => self.terminfo.parse_output(c),
+                Ok(c)  => {
+                    self.debug('-', c);
+                    self.terminfo.parse_output(c)
+                },
                 Err(e) => match e {
                     TerminalError::Unexpected(e) => panic!(e),
                     _ => break,
@@ -81,6 +91,24 @@ impl<'a> Terminal<'a> {
     }
 
 
+    pub fn print_debug_info(&self) {
+        println!("{}", self.debug.borrow().to_string());
+    }
+
+
+    #[cfg(feature="debug_comm")]
+    fn debug(&self, dir: char, c: u8) {
+        let s = match c as u8 {
+            0...31 => format!("{}[{}] ", dir, c as u8),
+            _      => format!("{}[{} '{}'] ", dir, c as u8, c as char)
+        };
+        self.debug.borrow_mut().push_str(&s);
+    }
+
+    #[cfg(not(feature="debug_comm"))]
+    #[allow(unused_variables)]
+    fn debug(&self, dir: char, c: u8) {}
+
     fn terminfo(s: &str) -> Box<Terminfo> {
         match s {
             "xterm-256color" => Box::new(TerminfoXterm256::new()),
@@ -90,6 +118,7 @@ impl<'a> Terminal<'a> {
 
 
 }
+
 
 
 // vim: ts=4:sw=4:sts=4:expandtab

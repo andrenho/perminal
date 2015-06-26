@@ -112,7 +112,7 @@ impl Plugin for PTY {
         self.alive.get()
     }
     
-    fn term(&self) -> &str { "xterm-256color" }
+    fn term(&self) -> &'static str { "xterm-256color" }
 }
 
 
