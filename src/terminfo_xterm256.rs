@@ -67,12 +67,6 @@ impl Terminfo for TerminfoXterm256 {
 impl TerminfoXterm256 {
 
     fn parse_command(&self) -> Command {
-        /* TODO - use this syntax when avaliable
-        match &self.cmd[..] {
-            ['[', 'H', '\x1b', '[', '2', 'J'] => ClearScreen,
-            _ => IncompleteCommand,
-        }*/
-
         // Local cursor movement
         let s: String = self.cmd.iter().cloned().collect();
         match s.as_ref() {
@@ -81,6 +75,7 @@ impl TerminfoXterm256 {
             "[H" => CursorHome,
             "[2J" => ClearScreen,
             _ => {
+            /*
                 if self.cmd[1].is_digit(10) {
                     let parsed = self.parse_parameters();
                     match parsed.command {
@@ -89,13 +84,34 @@ impl TerminfoXterm256 {
                     }
                 } else {
                     IncompleteCommand
-                }
+                }*/
+                IncompleteCommand
             }
         }
     }
 
 
     fn parse_parameters(&self) -> CommandParameters {
+        let mut par = 0u16;
+        let mut pars: Vec<u16> = Vec::new();
+        let mut cmd: Vec<char> = Vec::new();
+        let mut parsing_digit = false;
+        for c in &self.cmd {
+            if c.is_digit(10) {
+                parsing_digit = true;
+                par = par*10 + (*c as u8 - '0' as u8) as u16;
+                if *cmd.last().unwrap() != '_' { 
+                    cmd.push('_'); 
+                }
+            } else {
+                cmd.push(*c);
+                if parsing_digit {
+                    pars.push(par);
+                    par = 0;
+                    parsing_digit = false;
+                }
+            }
+        }
         CommandParameters { command: "", parameters: vec![] }
     }
 
