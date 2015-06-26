@@ -1,7 +1,8 @@
+mod config;
 mod plugin;
 mod pty;
-mod termcap;
-mod termcap_xterm256;
+mod terminfo;
+mod terminfo_xterm256;
 mod terminal;
 mod renderer;
 mod curses_renderer;
@@ -13,8 +14,9 @@ use renderer::Renderer;
 use curses_renderer::CursesRenderer;
 
 fn main() {
+    let mut cfg = config::Config::new();
     let plugin = pty::PTY::new();
-    let mut terminal = terminal::Terminal::new(&plugin);
+    let mut terminal = terminal::Terminal::new(&cfg, &plugin);
     let renderer = curses_renderer::CursesRenderer::new();
 
     while terminal.is_alive() && renderer.is_running() {

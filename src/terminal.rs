@@ -1,29 +1,32 @@
 use std::cell::Cell;
 use std::io::Error;
 
+use config::Config;
 use plugin::*;
 use userevent::UserEvent;
 use userevent::UserEvent::*;
 use userevent::Key;
 use matrix::Matrix;
-use termcap::Termcap;
-use termcap_xterm256::TermcapXterm256;
+use terminfo::Terminfo;
+use terminfo_xterm256::TerminfoXterm256;
 
 pub struct Terminal<'a> {
     pub matrix: Matrix,
+    cfg: &'a Config,
     plugin: &'a (Plugin + 'a),
     active: Cell<bool>,
-    termcap: Box<Termcap>,
+    terminfo: Box<Terminfo>,
 }
 
 impl<'a> Terminal<'a> {
 
-    pub fn new(plugin: &'a Plugin) -> Terminal<'a> { 
+    pub fn new(cfg: &'a Config, plugin: &'a Plugin) -> Terminal<'a> { 
         Terminal { 
             matrix: Matrix::new(80, 25),  // TODO - size
+            cfg: cfg,
             plugin: plugin, 
             active: Cell::new(true),
-            termcap: Terminal::termcap(plugin.term()),
+            terminfo: Terminal::terminfo(plugin.term()),
         }
     }
 
@@ -37,16 +40,23 @@ impl<'a> Terminal<'a> {
         match e {
             &KeyPress { ref key, .. } => {
                 match key {
+                    /* Keys used to control the terminal, that
+                       will not be sent to the plugin */
                     &Key::F12 => { self.active.set(false); Ok(()) }
-                    &Key::Char(k) => { //{ self.plugin.send(k as u8); Ok(()) }
-                        match self.plugin.send(k as u8) {
-                            Ok(_) => Ok(()),
-                            Err(e) => match e {
-                                TerminalError::Unexpected(ex) => Err(ex),
-                                _ => unreachable!(),
+                    /* The rest of the keys, that'll be sent
+                       to the plugin */
+                    key @ _ => {
+                        for k in self.terminfo.parse_input(key) {
+                            match self.plugin.send(k) {
+                                Err(e) => match e {
+                                    TerminalError::Unexpected(ex) => return Err(ex),
+                                    _ => unreachable!(),
+                                },
+                                _ => ()
                             }
                         }
-                    }
+                        Ok(())
+                    },
                 }
             },
             // Event::KeyRelease(_) => Ok(()),
@@ -57,7 +67,7 @@ impl<'a> Terminal<'a> {
     pub fn parse_plugin_output(&mut self) {
         loop {
             let commands = match self.plugin.get() {
-                Ok(c)  => self.termcap.parse(c),
+                Ok(c)  => self.terminfo.parse_output(c),
                 Err(e) => match e {
                     TerminalError::Unexpected(e) => panic!(e),
                     _ => break,
@@ -71,9 +81,9 @@ impl<'a> Terminal<'a> {
     }
 
 
-    fn termcap(s: &str) -> Box<Termcap> {
+    fn terminfo(s: &str) -> Box<Terminfo> {
         match s {
-            "xterm-256color" => Box::new(TermcapXterm256::new()),
+            "xterm-256color" => Box::new(TerminfoXterm256::new()),
             s => panic!("Invalid terminal type '{}'", s)
         }
     }
