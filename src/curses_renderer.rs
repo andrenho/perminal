@@ -51,12 +51,13 @@ impl Renderer for CursesRenderer {
         #[cfg(target_pointer_width = "64")]
         fn ch(x: u16, y: u16, c: u64) { mvaddch(y as i32, x as i32, c); }
 
+        // FIXME fix this mess
         for dirty in matrix.dirty().iter() {
             let x = dirty.x;
             let y = dirty.y;
             ch(x, y, match matrix.cells[&P(x,y)].c as u64 {
                 127 => ACS_STERLING(),
-                c @ 32...255 => c as u32,
+                c @ 32...255 => c as u64,
                 27 => ACS_DIAMOND(),
                 _ => ACS_STERLING(),
             });

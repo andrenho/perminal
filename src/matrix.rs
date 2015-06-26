@@ -89,6 +89,9 @@ impl Matrix {
             &CursorUp       => self.cursor.y = cmp::max(0, self.cursor.y-1),
             &CursorHome     => self.cursor = Position { x:0, y:0 },
 
+            // Parameter local cursor movement
+            &CursorPDown(n) => self.cursor.y = cmp::min(self.cursor.y + n, self.h-1),
+
             &ClearScreen => { 
                 for pos in &self.all_cell_positions() { 
                     self.set_cell(*pos, Default::default()); 

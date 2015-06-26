@@ -9,12 +9,17 @@ pub enum Command {
     //
     // SCREEN/CURSOR
     //
+
+    // local cursor movement
     CarriageReturn,
     CursorLeft,
     CursorDown,
     CursorRight,
     CursorUp,
     CursorHome,
+    
+    // parameter cursor movement
+    CursorPDown(u16),
 
     ClearScreen,
 }

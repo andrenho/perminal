@@ -1,16 +1,17 @@
-extern crate regex;
-
 use terminfo::Terminfo;
 use command::Command;
 use command::Command::*;
 use userevent::Key;
 use userevent::Key::*;
 
-use std::str;
-
 pub struct TerminfoXterm256 {
     cmd: Vec<char>,
     cmd_mode: bool,
+}
+
+struct CommandParameters<'a> {
+    command: &'a str,
+    parameters: Vec<u16>,
 }
 
 impl TerminfoXterm256 {
@@ -80,10 +81,22 @@ impl TerminfoXterm256 {
             "[H" => CursorHome,
             "[2J" => ClearScreen,
             _ => {
-                if regex!(r"
-                IncompleteCommand
+                if self.cmd[1].is_digit(10) {
+                    let parsed = self.parse_parameters();
+                    match parsed.command {
+                        "[_B" => CursorPDown(parsed.parameters[0]),
+                        _ => IncompleteCommand,
+                    }
+                } else {
+                    IncompleteCommand
+                }
             }
         }
+    }
+
+
+    fn parse_parameters(&self) -> CommandParameters {
+        CommandParameters { command: "", parameters: vec![] }
     }
 
 }

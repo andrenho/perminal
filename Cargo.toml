@@ -6,7 +6,6 @@ authors = ["André Wagner <andre.nho@gmail.com>"]
 [dependencies]
 ncurses = "5.73"
 libc = "0.1"
-regex = "0.1"
 #freetype-rs = "0.1"
 #sdl2 = "0.5"
 
