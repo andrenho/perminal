@@ -1,8 +1,12 @@
+extern crate regex;
+
 use terminfo::Terminfo;
 use command::Command;
 use command::Command::*;
 use userevent::Key;
 use userevent::Key::*;
+
+use std::str;
 
 pub struct TerminfoXterm256 {
     cmd: Vec<char>,
@@ -26,7 +30,8 @@ impl Terminfo for TerminfoXterm256 {
         match self.cmd_mode {
             false => match c {
                 0 => vec![],
-                10 => vec![LineFeed],
+                8 => vec![CursorLeft],
+                10 => vec![CursorDown],
                 13 => vec![CarriageReturn],
                 27 => { self.cmd_mode = true; vec![] }
                 c @ 1...255 => vec![PrintChar(c as char)],
@@ -66,8 +71,19 @@ impl TerminfoXterm256 {
             ['[', 'H', '\x1b', '[', '2', 'J'] => ClearScreen,
             _ => IncompleteCommand,
         }*/
-        if self.cmd == ['[', 'H', '\x1b', '[', '2', 'J'] { ClearScreen } 
-        else { IncompleteCommand }
+
+        // Local cursor movement
+        let s: String = self.cmd.iter().cloned().collect();
+        match s.as_ref() {
+            "[C" => CursorRight,
+            "[A" => CursorUp,
+            "[H" => CursorHome,
+            "[2J" => ClearScreen,
+            _ => {
+                if regex!(r"
+                IncompleteCommand
+            }
+        }
     }
 
 }

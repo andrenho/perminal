@@ -1,10 +1,21 @@
 pub enum Command {
     IncompleteCommand,
 
+    //
+    // CHARACTERS
+    //
     PrintChar(char),
-    LineFeed,
-    CarriageReturn,
     
+    //
+    // SCREEN/CURSOR
+    //
+    CarriageReturn,
+    CursorLeft,
+    CursorDown,
+    CursorRight,
+    CursorUp,
+    CursorHome,
+
     ClearScreen,
 }
 

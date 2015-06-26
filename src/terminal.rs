@@ -11,6 +11,7 @@ use matrix::Matrix;
 use terminfo::Terminfo;
 use terminfo_xterm256::TerminfoXterm256;
 
+#[allow(dead_code)]  // TODO - remove this, is used for cfg
 pub struct Terminal<'a, T: Plugin> {
     pub matrix: Matrix,
     cfg: &'a Config,
@@ -116,9 +117,7 @@ impl<'a, T:Plugin> Terminal<'a, T> {
         }
     }
 
-
 }
-
 
 
 // vim: ts=4:sw=4:sts=4:expandtab

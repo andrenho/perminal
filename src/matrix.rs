@@ -1,5 +1,6 @@
 use command::Command;
 use command::Command::*;
+use std::cmp;
 use std::collections::HashMap;
 
 //
@@ -69,20 +70,29 @@ impl Matrix {
 
     pub fn execute(&mut self, cmd: &Command) {
         match cmd {
+
+            &IncompleteCommand => (),
+
+            // Characters
             &PrintChar(c) => {
                 let cursor = self.cursor;
                 let attr = self.current_attribute;
                 self.set_cell(cursor, CharCell { c: c, attr: attr });
                 self.advance_cursor();
             },
-            &LineFeed => { self.advance_cursor_line(); }
-            &CarriageReturn => { self.cursor.x = 0; }
-            &IncompleteCommand => (),
+
+            // Local cursor movement
+            &CarriageReturn => self.cursor.x = 0,
+            &CursorLeft     => self.rewind_cursor(),
+            &CursorDown     => self.advance_cursor_line(),
+            &CursorRight    => self.advance_cursor(),
+            &CursorUp       => self.cursor.y = cmp::max(0, self.cursor.y-1),
+            &CursorHome     => self.cursor = Position { x:0, y:0 },
+
             &ClearScreen => { 
                 for pos in &self.all_cell_positions() { 
                     self.set_cell(*pos, Default::default()); 
                 } 
-                self.cursor = P(0,0);
             },
         }
     }
@@ -100,6 +110,12 @@ impl Matrix {
     fn set_cell(&mut self, cursor: Position, c: CharCell) {
         self.cells.insert(cursor, c);
         self.dirty.push(cursor);
+    }
+
+    fn rewind_cursor(&mut self) {
+        if self.cursor.x > 0 {
+            self.cursor.x -= 1;
+        }
     }
 
     fn advance_cursor(&mut self) {

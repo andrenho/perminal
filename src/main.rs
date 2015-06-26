@@ -14,7 +14,7 @@ use renderer::Renderer;
 use curses_renderer::CursesRenderer;
 
 fn main() {
-    let mut cfg = config::Config::new();
+    let cfg = config::Config::new();
     let plugin = pty::PTY::new();
     let mut terminal = terminal::Terminal::new(&cfg, plugin);
     {
