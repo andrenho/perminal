@@ -1,7 +1,7 @@
 use userevent::UserEvent;
 use userevent::UserEvent::*;
 use userevent::Key::*;
-use matrix::Matrix;
+use matrix::*;
 use renderer::Renderer;
 
 extern crate ncurses;
@@ -52,9 +52,9 @@ impl Renderer for CursesRenderer {
         fn ch(x: u16, y: u16, c: u64) { mvaddch(y as i32, x as i32, c); }
 
         for dirty in matrix.dirty().iter() {
-            let x = dirty.0;
-            let y = dirty.1;
-            ch(x, y, match matrix.cells[&(x, y)].c as u64 {
+            let x = dirty.x;
+            let y = dirty.y;
+            ch(x, y, match matrix.cells[&P(x,y)].c as u64 {
                 127 => ACS_STERLING(),
                 c @ 32...255 => c as u32,
                 27 => ACS_DIAMOND(),
@@ -65,7 +65,7 @@ impl Renderer for CursesRenderer {
             true  => { curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE); () },
             false => { curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE); () },
         }
-        wmove(stdscr, matrix.cursor.1 as i32, matrix.cursor.0 as i32);
+        wmove(stdscr, matrix.cursor.y as i32, matrix.cursor.x as i32);
         refresh();
     }
 }
