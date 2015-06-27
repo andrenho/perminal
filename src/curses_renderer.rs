@@ -45,22 +45,10 @@ impl Renderer for CursesRenderer {
     }
 
     fn update(&self, matrix: &mut Matrix) {
-        // hack because mvaddch signature is different in x86 and i64
-        #[cfg(target_pointer_width = "32")]
-        fn ch(x: u16, y: u16, c: u32) { mvaddch(y as i32, x as i32, c); }
-        #[cfg(target_pointer_width = "64")]
-        fn ch(x: u16, y: u16, c: u64) { mvaddch(y as i32, x as i32, c); }
-
-        // FIXME fix this mess
         for dirty in matrix.dirty().iter() {
             let x = dirty.x;
             let y = dirty.y;
-            ch(x, y, match matrix.cells[&P(x,y)].c as u64 {
-                127 => ACS_STERLING(),
-                c @ 32...255 => c as u64,
-                27 => ACS_DIAMOND(),
-                _ => ACS_STERLING(),
-            });
+            self.draw_char(matrix, x, y);
         }
         match matrix.cursor_on {
             true  => { curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE); () },
@@ -69,8 +57,46 @@ impl Renderer for CursesRenderer {
         wmove(stdscr, matrix.cursor.y as i32, matrix.cursor.x as i32);
         refresh();
     }
+
+
 }
 
+impl CursesRenderer {
+
+    fn get_attribute(&self, attr: Attributes) -> attr_t {
+        let mut a = A_NORMAL();
+        if attr.standout { a |= A_STANDOUT(); }
+        if attr.underline { a |= A_UNDERLINE(); }
+        a
+    }
+
+    fn draw_char(&self, matrix: &Matrix, x: u16, y: u16) {
+        let c = matrix.cells[&P(x,y)];
+        let ch = match c.c as u32 {
+            27 => ACS_DIAMOND(),
+            c @ 32...255 => c as u64,
+            _ => ACS_STERLING(),
+        };
+        mvaddch(y as i32, x as i32, ch as u64);
+        mvchgat(y as i32, x as i32, 1, self.get_attribute(c.attr), 0);
+    }
+
+}
+
+/*
+        // hack because mvaddch signature is different in x86 and i64
+        #[cfg(target_pointer_width = "32")]
+        fn ch(x: u16, y: u16, c: u32) { mvaddch(y as i32, x as i32, c); }
+        #[cfg(target_pointer_width = "64")]
+        fn ch(x: u16, y: u16, c: u64) { mvaddch(y as i32, x as i32, c); }
+
+            ch(x, y, match matrix.cells[&P(x,y)].c as u64 {
+                127 => ACS_STERLING(),
+                c @ 32...255 => c as u64,
+                27 => ACS_DIAMOND(),
+                _ => ACS_STERLING(),
+            });
+*/
 
 impl Drop for CursesRenderer {
     fn drop(&mut self) {

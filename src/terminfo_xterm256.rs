@@ -88,8 +88,13 @@ impl TerminfoXterm256 {
             "[K"  => ClearEOL,
             "[1K" => ClearBOL,
             // insert mode
-            "[4l" => SetInsertMode(false),
             "[4h" => SetInsertMode(true),
+            "[4l" => SetInsertMode(false),
+            // attributes
+            "[7m" => SetStandoutMode(true),
+            "[27m" => SetStandoutMode(false),
+            "[4m" => SetUnderlineMode(true),
+            "[24m" => SetUnderlineMode(false),
             _ => {
                 if self.cmd.len() > 1 && self.cmd[1].is_digit(10) {
                     let p = self.parse_parameters();

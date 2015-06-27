@@ -19,9 +19,29 @@ pub fn P(x: u16, y: u16) -> Position { Position { x:x, y:y } }
 // Attributes
 //
 #[derive(Clone,Copy)]
-pub struct Attributes;
+pub struct Attributes {
+    pub standout: bool,
+    pub underline: bool,
+    pub reverse: bool,
+    pub blink: bool,
+    pub bold: bool,
+    pub dim: bool,
+    pub invis: bool,
+    pub acs: bool,
+}
 impl Default for Attributes {
-    fn default() -> Attributes { Attributes }
+    fn default() -> Attributes {
+        Attributes {
+            standout: false,
+            underline: false,
+            reverse: false,
+            blink: false,
+            bold: false,
+            dim: false,
+            invis: false,
+            acs: false,
+        }
+    }
 }
 
 //
@@ -62,7 +82,7 @@ impl Matrix {
             saved_cursor: Position { x:0, y:0 },
             cursor_on: true,
             dirty: vec![],
-            current_attribute: Attributes,
+            current_attribute: Default::default(),
             scroll_region: (0, h-1),
             insert_mode: false,
         };
@@ -145,6 +165,10 @@ impl Matrix {
             // Insert mode
             &SetInsertMode(b) => self.insert_mode = b,
             &InsertChars(n)   => self.insert_chars(n),
+
+            // Attributes
+            &SetStandoutMode(b)  => self.current_attribute.standout = b,
+            &SetUnderlineMode(b) => self.current_attribute.underline = b,
         }
     }
 

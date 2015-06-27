@@ -54,6 +54,10 @@ pub enum Command {
     // insert mode
     SetInsertMode(bool),
     InsertChars(u16),
+
+    // attributes
+    SetStandoutMode(bool),
+    SetUnderlineMode(bool),
 }
 
 // vim: ts=4:sw=4:sts=4:expandtab
