@@ -11,7 +11,7 @@ pub struct TerminfoXterm256 {
 
 struct CommandParameters<> {
     command: String,
-    parameters: Vec<u16>,
+    pars: Vec<u16>,
 }
 
 impl TerminfoXterm256 {
@@ -68,18 +68,59 @@ impl Terminfo for TerminfoXterm256 {
 impl TerminfoXterm256 {
 
     fn parse_command(&self) -> Command {
-        // Local cursor movement
         let s: String = self.cmd.iter().cloned().collect();
         match s.as_ref() {
-            "[C" => CursorRight,
-            "[A" => CursorUp,
-            "[H" => CursorHome,
+            // local cursor movement
+            "[C"  => CursorRight,
+            "[A"  => CursorUp,
+            "[H"  => CursorHome,
+            "7"   => SaveCursorPosition,
+            "8"   => RestoreCursorPosition,
+            // scrolling
+            "M"   => CursorUp,  // TODO - ???
+            // add to screen
+            "[L"  => InsertLine,
+            // delete from screen
             "[2J" => ClearScreen,
+            "[P"  => DeleteChar,
+            "[M"  => DeleteLine,
+            "[J"  => ClearEOS,
+            "[K"  => ClearEOL,
+            "[1K" => ClearBOL,
+            // insert mode
+            "[4l" => SetInsertMode(false),
+            "[4h" => SetInsertMode(true),
+            // reset
+            "[!p" => NoOp,  // TODO - term reset, ignore by now
+            "[>"  => NoOp,  // TODO - term reset, ignore by now
             _ => {
                 if self.cmd.len() > 1 && self.cmd[1].is_digit(10) {
-                    let parsed = self.parse_parameters();
-                    match parsed.command.as_ref() {
-                        "[_B" => CursorPDown(parsed.parameters[0]),
+                    let p = self.parse_parameters();
+                    match p.command.as_ref() {
+                        // parameterized local cursor movement
+                        "[_D" => CursorPLeft(p.pars[0]),
+                        "[_B" => CursorPDown(p.pars[0]),
+                        "[_C" => CursorPRight(p.pars[0]),
+                        "[_A" => CursorPUp(p.pars[0]),
+                        // absolute cursor movement
+                        "[_;_H" => MoveCursor(p.pars[0], p.pars[1]),
+                        "[_G"   => MoveCursorColumn(p.pars[0]),
+                        "[_d"   => MoveCursorRow(p.pars[0]),
+                        // scrolling
+                        "[_;_r" => ChangeScrollRegion(p.pars[0], p.pars[1]),
+                        "[_S"   => ScrollForward(p.pars[0]),
+                        "[_T"   => ScrollReverse(p.pars[0]),
+                        // add to screen
+                        "[_L" => InsertLines(p.pars[0]),
+                        // delete from screen
+                        "[_P" => DeleteChars(p.pars[0]),
+                        "[_M" => DeleteLines(p.pars[0]),
+                        "[_X" => EraseChars(p.pars[0]),
+                        // insert mode
+                        "[_@" => InsertChars(p.pars[0]),
+                        // reset
+                        "[?_;_l" => NoOp,   // TODO - term reset, ignore by now
+                        // no real code
                         _ => IncompleteCommand,
                     }
                 } else {
@@ -111,7 +152,7 @@ impl TerminfoXterm256 {
                 }
             }
         }
-        CommandParameters { command: cmd.iter().cloned().collect(), parameters: pars }
+        CommandParameters { command: cmd.iter().cloned().collect(), pars: pars }
     }
 
 }

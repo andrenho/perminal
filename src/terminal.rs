@@ -34,18 +34,12 @@ impl<'a, T:Plugin> Terminal<'a, T> {
             debug: RefCell::new(String::new()),
         };
         /*
-        t.plugin.send('t' as u8);
-        t.plugin.send('p' as u8);
-        t.plugin.send('u' as u8);
-        t.plugin.send('t' as u8);
-        t.plugin.send(' ' as u8);
         t.plugin.send('c' as u8);
-        t.plugin.send('u' as u8);
-        t.plugin.send('d' as u8);
-        t.plugin.send(' ' as u8);
-        t.plugin.send('1' as u8);
-        t.plugin.send('0' as u8);
-        t.plugin.send(13);
+        t.plugin.send('l' as u8);
+        t.plugin.send('e' as u8);
+        t.plugin.send('a' as u8);
+        t.plugin.send('r' as u8);
+        t.plugin.send(13 as u8);
         */
         t
     }
