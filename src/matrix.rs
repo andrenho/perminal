@@ -26,7 +26,8 @@ pub struct Attributes {
     pub blink: bool,
     pub bold: bool,
     pub dim: bool,
-    pub invis: bool,
+    pub invisible: bool,
+    pub protected: bool,
     pub acs: bool,
 }
 impl Default for Attributes {
@@ -38,7 +39,8 @@ impl Default for Attributes {
             blink: false,
             bold: false,
             dim: false,
-            invis: false,
+            invisible: false,
+            protected: false,
             acs: false,
         }
     }
@@ -65,6 +67,8 @@ pub struct Matrix {
     pub cells: HashMap<Position, CharCell>,
     pub cursor_on: bool,
     pub cursor: Position,
+    pub play_bell: bool,
+    pub reverse_screen: bool,
     saved_cursor: Position,
     dirty: Vec<Position>,
     current_attribute: Attributes,
@@ -80,6 +84,8 @@ impl Matrix {
             cells: HashMap::new(),
             cursor: Position { x:0, y:0 },
             saved_cursor: Position { x:0, y:0 },
+            play_bell: false,
+            reverse_screen: false,
             cursor_on: true,
             dirty: vec![],
             current_attribute: Default::default(),
@@ -97,7 +103,7 @@ impl Matrix {
     pub fn execute(&mut self, cmd: &Command) {
         match cmd {
 
-            &IncompleteCommand => (),
+            &NoOp => (),
 
             // Characters
             &PrintChar(c) => {
@@ -169,6 +175,16 @@ impl Matrix {
             // Attributes
             &SetStandoutMode(b)  => self.current_attribute.standout = b,
             &SetUnderlineMode(b) => self.current_attribute.underline = b,
+            &SetBlinkMode        => self.current_attribute.blink = true,
+            &SetBoldMode         => self.current_attribute.bold = true,
+            &SetInvisibleMode    => self.current_attribute.invisible = true,
+            &SetReverseMode      => self.current_attribute.reverse = true,
+            &ExitAttributeMode   => self.current_attribute = Default::default(),
+            &SetCharsetMode(b)   => self.current_attribute.acs = b,
+
+            // Bells
+            Bell             => self.play_bell = true, 
+            ReverseScreen(b) => self.reverse_screen = b,
         }
     }
 

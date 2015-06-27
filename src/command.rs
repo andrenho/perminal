@@ -1,5 +1,5 @@
 pub enum Command {
-    IncompleteCommand,
+    NoOp,
 
     //
     // CHARACTERS
@@ -58,6 +58,16 @@ pub enum Command {
     // attributes
     SetStandoutMode(bool),
     SetUnderlineMode(bool),
+    SetBlinkMode,
+    SetBoldMode,
+    SetInvisibleMode,
+    SetReverseMode,
+    ExitAttributeMode,
+    SetCharsetMode(bool),
+
+    // bell
+    Bell,
+    ReverseScreen(bool),
 }
 
 // vim: ts=4:sw=4:sts=4:expandtab

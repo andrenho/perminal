@@ -31,6 +31,7 @@ impl Terminfo for TerminfoXterm256 {
         match self.cmd_mode {
             false => match c {
                 0 => vec![],
+                8 => vec![Bell],
                 8 => vec![CursorLeft],
                 10 => vec![CursorDown],
                 13 => vec![CarriageReturn],
@@ -40,16 +41,12 @@ impl Terminfo for TerminfoXterm256 {
             },
             true => {
                 self.cmd.push(c as char);
-                match self.parse_command() {
-                    IncompleteCommand => { 
-                        vec![]
-                    },
-                    cmd @ _ => {
-                        self.cmd_mode = false;
-                        self.cmd.clear();
-                        vec![cmd]
-                    }
+                let cmds = self.parse_command();
+                if !cmds.is_empty() {
+                    self.cmd_mode = false;
+                    self.cmd.clear();
                 }
+                cmds
             },
         }
     }
@@ -67,64 +64,78 @@ impl Terminfo for TerminfoXterm256 {
 
 impl TerminfoXterm256 {
 
-    fn parse_command(&self) -> Command {
+    fn parse_command(&self) -> Vec<Command> {
         let s: String = self.cmd.iter().cloned().collect();
         match s.as_ref() {
             // local cursor movement
-            "[C"  => CursorRight,
-            "[A"  => CursorUp,
-            "[H"  => CursorHome,
-            "7"   => SaveCursorPosition,
-            "8"   => RestoreCursorPosition,
+            "[C"  => vec![CursorRight],
+            "[A"  => vec![CursorUp],
+            "[H"  => vec![CursorHome],
+            "7"   => vec![SaveCursorPosition],
+            "8"   => vec![RestoreCursorPosition],
             // scrolling
-            "M"   => CursorUp,  // TODO - ???
+            "M"   => vec![CursorUp],  // TODO - ???
             // add to screen
-            "[L"  => InsertLine,
+            "[L"  => vec![InsertLine],
             // delete from screen
-            "[2J" => ClearScreen,
-            "[P"  => DeleteChar,
-            "[M"  => DeleteLine,
-            "[J"  => ClearEOS,
-            "[K"  => ClearEOL,
-            "[1K" => ClearBOL,
+            "[2J" => vec![ClearScreen],
+            "[P"  => vec![DeleteChar],
+            "[M"  => vec![DeleteLine],
+            "[J"  => vec![ClearEOS],
+            "[K"  => vec![ClearEOL],
+            "[1K" => vec![ClearBOL],
             // insert mode
-            "[4h" => SetInsertMode(true),
-            "[4l" => SetInsertMode(false),
+            "[4h" => vec![SetInsertMode(true)],
+            "[4l" => vec![SetInsertMode(false)],
             // attributes
-            "[7m" => SetStandoutMode(true),
-            "[27m" => SetStandoutMode(false),
-            "[4m" => SetUnderlineMode(true),
-            "[24m" => SetUnderlineMode(false),
+            "[27m" => vec![SetStandoutMode(false)],
+            "[24m" => vec![SetUnderlineMode(false)],
+            "[m"   => vec![ExitAttributeMode],
+            "(0"   => vec![SetCharsetMode(true)],
+            "(B"   => vec![SetCharsetMode(false)],
+            // bells
+            "[?5h" => vec![ReverseScreen(true)],
+            "[?5l" => vec![ReverseScreen(false)],
             _ => {
                 if self.cmd.len() > 1 && self.cmd[1].is_digit(10) {
                     let p = self.parse_parameters();
                     match p.command.as_ref() {
                         // parameterized local cursor movement
-                        "[_D" => CursorPLeft(p.pars[0]),
-                        "[_B" => CursorPDown(p.pars[0]),
-                        "[_C" => CursorPRight(p.pars[0]),
-                        "[_A" => CursorPUp(p.pars[0]),
+                        "[_D" => vec![CursorPLeft(p.pars[0])],
+                        "[_B" => vec![CursorPDown(p.pars[0])],
+                        "[_C" => vec![CursorPRight(p.pars[0])],
+                        "[_A" => vec![CursorPUp(p.pars[0])],
                         // absolute cursor movement
-                        "[_;_H" => MoveCursor(p.pars[0], p.pars[1]),
-                        "[_G"   => MoveCursorColumn(p.pars[0]),
-                        "[_d"   => MoveCursorRow(p.pars[0]),
+                        "[_;_H" => vec![MoveCursor(p.pars[0], p.pars[1])],
+                        "[_G"   => vec![MoveCursorColumn(p.pars[0])],
+                        "[_d"   => vec![MoveCursorRow(p.pars[0])],
                         // scrolling
-                        "[_;_r" => ChangeScrollRegion(p.pars[0], p.pars[1]),
-                        "[_S"   => ScrollForward(p.pars[0]),
-                        "[_T"   => ScrollReverse(p.pars[0]),
+                        "[_;_r" => vec![ChangeScrollRegion(p.pars[0], p.pars[1])],
+                        "[_S"   => vec![ScrollForward(p.pars[0])],
+                        "[_T"   => vec![ScrollReverse(p.pars[0])],
                         // add to screen
-                        "[_L" => InsertLines(p.pars[0]),
+                        "[_L" => vec![InsertLines(p.pars[0])],
                         // delete from screen
-                        "[_P" => DeleteChars(p.pars[0]),
-                        "[_M" => DeleteLines(p.pars[0]),
-                        "[_X" => EraseChars(p.pars[0]),
+                        "[_P" => vec![DeleteChars(p.pars[0])],
+                        "[_M" => vec![DeleteLines(p.pars[0])],
+                        "[_X" => vec![EraseChars(p.pars[0])],
                         // insert mode
-                        "[_@" => InsertChars(p.pars[0]),
+                        "[_@" => vec![InsertChars(p.pars[0])],
+                        // attributes
+                        "[_m"                 => self.sgr_attributes(p.pars),
+                        "[_;_m"               => self.sgr_attributes(p.pars),
+                        "[_;_;_m"             => self.sgr_attributes(p.pars),
+                        "[_;_;_;_m"           => self.sgr_attributes(p.pars),
+                        "[_;_;_;_;_m"         => self.sgr_attributes(p.pars),
+                        "[_;_;_;_;_;_m"       => self.sgr_attributes(p.pars),
+                        "[_;_;_;_;_;_;_m"     => self.sgr_attributes(p.pars),
+                        "[_;_;_;_;_;_;_;_m"   => self.sgr_attributes(p.pars),
+                        "[_;_;_;_;_;_;_;_;_m" => self.sgr_attributes(p.pars),
                         // no real code
-                        _ => IncompleteCommand,
+                        _ => vec![],
                     }
                 } else {
-                    IncompleteCommand
+                    vec![]
                 }
             }
         }
@@ -153,6 +164,23 @@ impl TerminfoXterm256 {
             }
         }
         CommandParameters { command: cmd.iter().cloned().collect(), pars: pars }
+    }
+
+
+    fn sgr_attributes(&self, pars: Vec<u16>) -> Vec<Command> {
+        let mut cmds: Vec<Command> = Vec::new();
+        for p in pars {
+            cmds.push(match p {
+                0 => ExitAttributeMode,
+                1 => SetBoldMode,
+                4 => SetUnderlineMode(true),
+                5 => SetBlinkMode,
+                7 => SetStandoutMode(true),
+                8 => SetInvisibleMode,
+                _ => NoOp,
+            });
+        }
+        cmds
     }
 
 }
