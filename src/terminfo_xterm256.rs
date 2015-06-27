@@ -90,9 +90,6 @@ impl TerminfoXterm256 {
             // insert mode
             "[4l" => SetInsertMode(false),
             "[4h" => SetInsertMode(true),
-            // reset
-            "[!p" => NoOp,  // TODO - term reset, ignore by now
-            "[>"  => NoOp,  // TODO - term reset, ignore by now
             _ => {
                 if self.cmd.len() > 1 && self.cmd[1].is_digit(10) {
                     let p = self.parse_parameters();
@@ -118,8 +115,6 @@ impl TerminfoXterm256 {
                         "[_X" => EraseChars(p.pars[0]),
                         // insert mode
                         "[_@" => InsertChars(p.pars[0]),
-                        // reset
-                        "[?_;_l" => NoOp,   // TODO - term reset, ignore by now
                         // no real code
                         _ => IncompleteCommand,
                     }
