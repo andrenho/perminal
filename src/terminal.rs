@@ -25,14 +25,29 @@ impl<'a, T:Plugin> Terminal<'a, T> {
 
     pub fn new(cfg: &'a Config, plugin: T) -> Terminal<T> { 
         let term = plugin.term();
-        Terminal { 
+        let t = Terminal { 
             matrix: Matrix::new(80, 25),  // TODO - size
             cfg: cfg,
             plugin: plugin, 
             active: Cell::new(true),
             terminfo: Terminal::<T>::terminfo(term),
             debug: RefCell::new(String::new()),
-        }
+        };
+        /*
+        t.plugin.send('t' as u8);
+        t.plugin.send('p' as u8);
+        t.plugin.send('u' as u8);
+        t.plugin.send('t' as u8);
+        t.plugin.send(' ' as u8);
+        t.plugin.send('c' as u8);
+        t.plugin.send('u' as u8);
+        t.plugin.send('d' as u8);
+        t.plugin.send(' ' as u8);
+        t.plugin.send('1' as u8);
+        t.plugin.send('0' as u8);
+        t.plugin.send(13);
+        */
+        t
     }
 
 

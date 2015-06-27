@@ -9,8 +9,8 @@ pub struct TerminfoXterm256 {
     cmd_mode: bool,
 }
 
-struct CommandParameters<'a> {
-    command: &'a str,
+struct CommandParameters<> {
+    command: String,
     parameters: Vec<u16>,
 }
 
@@ -64,6 +64,7 @@ impl Terminfo for TerminfoXterm256 {
 
 }
 
+
 impl TerminfoXterm256 {
 
     fn parse_command(&self) -> Command {
@@ -75,17 +76,15 @@ impl TerminfoXterm256 {
             "[H" => CursorHome,
             "[2J" => ClearScreen,
             _ => {
-            /*
-                if self.cmd[1].is_digit(10) {
+                if self.cmd.len() > 1 && self.cmd[1].is_digit(10) {
                     let parsed = self.parse_parameters();
-                    match parsed.command {
+                    match parsed.command.as_ref() {
                         "[_B" => CursorPDown(parsed.parameters[0]),
                         _ => IncompleteCommand,
                     }
                 } else {
                     IncompleteCommand
-                }*/
-                IncompleteCommand
+                }
             }
         }
     }
@@ -112,7 +111,7 @@ impl TerminfoXterm256 {
                 }
             }
         }
-        CommandParameters { command: "", parameters: vec![] }
+        CommandParameters { command: cmd.iter().cloned().collect(), parameters: pars }
     }
 
 }
