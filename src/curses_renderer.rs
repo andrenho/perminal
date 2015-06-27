@@ -50,13 +50,17 @@ impl Renderer for CursesRenderer {
             let y = dirty.y;
             self.draw_char(matrix, x, y);
         }
-        match matrix.cursor_on {
-            true  => { curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE); () },
-            false => { curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE); () },
+        match matrix.cursor_visibility {
+            0 => { curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE); () },
+            2 => { curs_set(CURSOR_VISIBILITY::CURSOR_VERY_VISIBLE); () },
+            _ => { curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE); () },
         }
         if matrix.play_bell {
-            bell();
+            beep();
             matrix.play_bell = false;
+        }
+        if matrix.reverse_screen {
+            flash();
         }
         wmove(stdscr, matrix.cursor.y as i32, matrix.cursor.x as i32);
         refresh();

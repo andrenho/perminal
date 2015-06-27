@@ -108,6 +108,7 @@ impl<'a, T:Plugin> Terminal<'a, T> {
 
     #[cfg(feature="debug_comm")]
     fn debug(&self, dir: char, c: u8) {
+        if c as u8 == 27 { self.debug.borrow_mut().push_str("\n"); }
         let s = match c as u8 {
             0...31 => format!("{}[{}] ", dir, c as u8),
             _      => format!("{}[{} '{}'] ", dir, c as u8, c as char)

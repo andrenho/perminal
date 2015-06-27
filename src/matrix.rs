@@ -65,15 +65,16 @@ pub struct Matrix {
     pub w: u16,
     pub h: u16,
     pub cells: HashMap<Position, CharCell>,
-    pub cursor_on: bool,
     pub cursor: Position,
     pub play_bell: bool,
     pub reverse_screen: bool,
+    pub cursor_visibility: u8,
     saved_cursor: Position,
     dirty: Vec<Position>,
     current_attribute: Attributes,
     scroll_region: (u16,u16),
     insert_mode: bool,
+    saved_screen: HashMap<Position, CharCell>,
 }
 
 impl Matrix {
@@ -86,11 +87,12 @@ impl Matrix {
             saved_cursor: Position { x:0, y:0 },
             play_bell: false,
             reverse_screen: false,
-            cursor_on: true,
+            cursor_visibility: 1,
             dirty: vec![],
             current_attribute: Default::default(),
             scroll_region: (0, h-1),
             insert_mode: false,
+            saved_screen: HashMap::new(),
         };
         for x in 0..w {
             for y in 0..h {
@@ -183,8 +185,21 @@ impl Matrix {
             &SetCharsetMode(b)   => self.current_attribute.acs = b,
 
             // Bells
-            Bell             => self.play_bell = true, 
-            ReverseScreen(b) => self.reverse_screen = b,
+            &Bell             => self.play_bell = true, 
+            &ReverseScreen(b) => self.reverse_screen = b,
+            
+            // Cursor intensity
+            &CursorVisibility(n) => self.cursor_visibility = n as u8,
+
+            // Meta mode
+            &SetMetaMode(b) => (),  // TODO - ?
+
+            // Program initialization
+            &SaveScreen    => { let s = self.cells.clone(); self.saved_screen = s; self.saved_cursor = self.cursor; },
+            &RestoreScreen => { let s = self.saved_screen.clone(); self.cells = s; self.cursor = self.saved_cursor; },
+
+            // Keypad mode
+            &SetKeypadMode(b) => (),
         }
     }
 

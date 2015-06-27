@@ -31,7 +31,7 @@ impl Terminfo for TerminfoXterm256 {
         match self.cmd_mode {
             false => match c {
                 0 => vec![],
-                8 => vec![Bell],
+                7 => vec![Bell],
                 8 => vec![CursorLeft],
                 10 => vec![CursorDown],
                 13 => vec![CarriageReturn],
@@ -96,6 +96,23 @@ impl TerminfoXterm256 {
             // bells
             "[?5h" => vec![ReverseScreen(true)],
             "[?5l" => vec![ReverseScreen(false)],
+            // cursor intensity
+            "[?25l"          => vec![CursorVisibility(0)],
+            "[?12l\x1b[?25h" => vec![CursorVisibility(1)],
+            "[?12;25h"       => vec![CursorVisibility(2)],
+            // meta key
+            "[?1034h" => vec![SetMetaMode(true)],
+            "[?1034l" => vec![SetMetaMode(false)],
+            // program initialization
+            "[?1049h" => vec![SaveScreen],
+            "[?1049l" => vec![RestoreScreen],
+            // keypad keys activation
+            "[?1h\x1b=" => vec![SetKeypadMode(true)],
+            "[?1l\x1b>" => vec![SetKeypadMode(false)],
+            // local printer
+            "[i"  => vec![NoOp],
+            "[4i" => vec![NoOp],
+            "[5i" => vec![NoOp],
             _ => {
                 if self.cmd.len() > 1 && self.cmd[1].is_digit(10) {
                     let p = self.parse_parameters();

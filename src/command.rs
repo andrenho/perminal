@@ -68,6 +68,19 @@ pub enum Command {
     // bell
     Bell,
     ReverseScreen(bool),
+
+    // cursor intensity
+    CursorVisibility(u16),
+
+    // meta mode
+    SetMetaMode(bool),
+
+    // program initialization
+    SaveScreen,
+    RestoreScreen,
+
+    // keypad activation
+    SetKeypadMode(bool),
 }
 
 // vim: ts=4:sw=4:sts=4:expandtab
