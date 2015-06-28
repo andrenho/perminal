@@ -9,6 +9,8 @@ mod x11_renderer;
 mod matrix;
 mod userevent;
 mod command;
+mod font;
+mod bitmapfont;
 
 use renderer::Renderer;
 use x11_renderer::X11Renderer;
@@ -18,7 +20,8 @@ fn main() {
     let plugin = pty::PTY::new();
     let mut terminal = terminal::Terminal::new(&cfg, plugin);
     {
-        let renderer = x11_renderer::X11Renderer::new();
+        let font = bitmapfont::BitmapFont::new("Sleroux_800x300.bmp");
+        let renderer = x11_renderer::X11Renderer::new(font);
 
         while terminal.is_alive() && renderer.is_running() {
 

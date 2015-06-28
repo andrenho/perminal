@@ -192,14 +192,14 @@ impl Matrix {
             &CursorVisibility(n) => self.cursor_visibility = n as u8,
 
             // Meta mode
-            &SetMetaMode(b) => (),  // TODO - ?
+            &SetMetaMode(_) => (),  // TODO - ?
 
             // Program initialization
             &SaveScreen    => { let s = self.cells.clone(); self.saved_screen = s; self.saved_cursor = self.cursor; },
             &RestoreScreen => { let s = self.saved_screen.clone(); self.cells = s; self.cursor = self.saved_cursor; },
 
             // Keypad mode
-            &SetKeypadMode(b) => (),
+            &SetKeypadMode(_) => (),
         }
     }
 

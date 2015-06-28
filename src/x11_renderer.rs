@@ -4,6 +4,7 @@ use renderer::Renderer;
 use userevent::UserEvent;
 use userevent::UserEvent::*;
 use matrix::*;
+use font::Font;
 
 extern crate libc;
 extern crate x11;
@@ -14,14 +15,15 @@ use std::mem::zeroed;
 use self::libc::c_uint;
 use self::x11::xlib;
 
-pub struct X11Renderer {
+pub struct X11Renderer<F:Font> {
     active: Cell<bool>,
+    font: F,
     display: *mut xlib::Display,
     window: u64,
 }
 
-impl X11Renderer {
-    pub fn new() -> Self {
+impl<F:Font> X11Renderer<F> {
+    pub fn new(font: F) -> Self {
         let display;
         let window;
         unsafe {
@@ -63,6 +65,7 @@ impl X11Renderer {
         // create structure
         X11Renderer {
             active: Cell::new(true),
+            font: font,
             display: display,
             window: window,
         }
@@ -70,7 +73,7 @@ impl X11Renderer {
 }
 
 
-impl Renderer for X11Renderer {
+impl<F:Font> Renderer for X11Renderer<F> {
     fn is_running(&self) -> bool {
     	self.active.get()
     }
