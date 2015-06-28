@@ -61,7 +61,7 @@ pub enum Command {
     SetBlinkMode,
     SetBoldMode,
     SetInvisibleMode,
-    SetReverseMode,
+    #[allow(dead_code)] SetReverseMode,
     ExitAttributeMode,
     SetCharsetMode(bool),
 

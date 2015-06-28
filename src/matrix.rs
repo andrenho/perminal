@@ -18,7 +18,7 @@ pub fn P(x: u16, y: u16) -> Position { Position { x:x, y:y } }
 //
 // Attributes
 //
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,PartialEq,Eq,Hash)]
 pub struct Attributes {
     pub standout: bool,
     pub underline: bool,

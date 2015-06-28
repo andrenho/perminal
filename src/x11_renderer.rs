@@ -1,4 +1,6 @@
 use std::cell::Cell;
+use std::cell::RefCell;
+use std::collections::HashMap;
 
 use renderer::Renderer;
 use userevent::UserEvent;
@@ -19,13 +21,20 @@ pub struct X11Renderer<F:Font> {
     active: Cell<bool>,
     font: F,
     display: *mut xlib::Display,
+    #[allow(dead_code)] screen_num: i32,
     window: u64,
+    gc: *mut xlib::_XGC,
+    depth: i32,
+    char_pxmap: RefCell<HashMap<(char, Attributes), xlib::Pixmap>>,
 }
 
 impl<F:Font> X11Renderer<F> {
     pub fn new(font: F) -> Self {
         let display;
         let window;
+        let screen_num;
+        let gc;
+        let depth;
         unsafe {
             // open display
             display = xlib::XOpenDisplay(null());
@@ -34,7 +43,7 @@ impl<F:Font> X11Renderer<F> {
             }
 
             // create window
-            let screen_num = xlib::XDefaultScreen(display);
+            screen_num = xlib::XDefaultScreen(display);
             let mut attributes: xlib::XSetWindowAttributes = zeroed();
             attributes.background_pixel = xlib::XWhitePixel(display, screen_num);
             window = xlib::XCreateWindow(
@@ -60,14 +69,24 @@ impl<F:Font> X11Renderer<F> {
                     break;
                 }
             }
+
+            // create GC
+            gc = xlib::XCreateGC(display, window, 0, null_mut());
+
+            // find depth
+            depth = xlib::XDefaultDepth(display, screen_num);
         }
 
         // create structure
         X11Renderer {
-            active: Cell::new(true),
-            font: font,
-            display: display,
-            window: window,
+            active:     Cell::new(true),
+            font:       font,
+            display:    display,
+            window:     window,
+            screen_num: screen_num,
+            gc:         gc,
+            depth:      depth,
+            char_pxmap: RefCell::new(HashMap::new()),
         }
     }
 }
@@ -91,6 +110,44 @@ impl<F:Font> Renderer for X11Renderer<F> {
     }
 
     fn update(&self, matrix: &mut Matrix) {
+        // draw chars
+        for dirty in matrix.dirty().iter() {
+            let x = dirty.x;
+            let y = dirty.y;
+            self.draw_char(matrix, x, y);
+        }
+        // TODO - set cursor intensity, position
+        // TODO - play bell
+        // TODO - reverse screen
+        // TODO - refresh screen
+    }
+}
+
+
+impl<F:Font> X11Renderer<F> {
+    fn draw_char(&self, matrix: &Matrix, x: u16, y: u16) {
+        let c = matrix.cells[&P(x,y)];
+        let n = self.char_pxmap.borrow();
+        //let mut m = self.char_pxmap.borrow_mut();
+        let px;
+        let pixmap = match n.get(&(c.c, c.attr)) {
+            Some(v) => v,
+            None    => {
+                // create char
+                unsafe {
+                    px = xlib::XCreatePixmap(self.display, self.window, self.font.char_width(), self.font.char_height(), self.depth as u32);
+                    xlib::XDrawPoint(self.display, px, self.gc, 5, 5);
+                    // TODO - create char
+                    // TODO - m.insert((c.c, c.attr), px);
+                    &px
+                }
+            },
+        };
+        unsafe {
+            xlib::XCopyArea(self.display, *pixmap, self.window, self.gc,
+                0, 0, 10, 10, // TODO - width, height
+                0, 0);
+        }
     }
 }
 
