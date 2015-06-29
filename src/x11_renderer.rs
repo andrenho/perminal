@@ -1,31 +1,32 @@
+use std::ffi::CString;
+use std::ptr::{null,null_mut};
+use std::mem::zeroed;
 use std::cell::Cell;
 use std::cell::RefCell;
 use std::collections::HashMap;
+
+extern crate libc;
+use self::libc::c_uint;
+
+extern crate x11;
+use self::x11::xlib;
 
 use renderer::Renderer;
 use userevent::UserEvent;
 use userevent::UserEvent::*;
 use matrix::*;
 use font::Font;
-
-extern crate libc;
-extern crate x11;
-
-use std::ffi::CString;
-use std::ptr::{null,null_mut};
-use std::mem::zeroed;
-use self::libc::c_uint;
-use self::x11::xlib;
+use x11_charpixmap::X11CharPixmap;
 
 pub struct X11Renderer<F:Font> {
     active: Cell<bool>,
     font: F,
     display: *mut xlib::Display,
     #[allow(dead_code)] screen_num: i32,
-    window: u64,
+    window: c_uint,
     gc: *mut xlib::_XGC,
     depth: i32,
-    char_pxmap: RefCell<HashMap<(char, Attributes), xlib::Pixmap>>,
+    char_pxmap: RefCell<HashMap<(char, Attributes), X11CharPixmap>>,
 }
 
 impl<F:Font> X11Renderer<F> {
@@ -127,26 +128,16 @@ impl<F:Font> Renderer for X11Renderer<F> {
 impl<F:Font> X11Renderer<F> {
     fn draw_char(&self, matrix: &Matrix, x: u16, y: u16) {
         let c = matrix.cells[&P(x,y)];
-        let n = self.char_pxmap.borrow();
-        //let mut m = self.char_pxmap.borrow_mut();
-        let px;
-        let pixmap = match n.get(&(c.c, c.attr)) {
-            Some(v) => v,
-            None    => {
-                // create char
-                unsafe {
-                    px = xlib::XCreatePixmap(self.display, self.window, self.font.char_width(), self.font.char_height(), self.depth as u32);
-                    xlib::XDrawPoint(self.display, px, self.gc, 5, 5);
-                    // TODO - create char
-                    // TODO - m.insert((c.c, c.attr), px);
-                    &px
-                }
-            },
-        };
+        let w = self.font.char_width();
+        let h = self.font.char_height();
+        let mut m = self.char_pxmap.borrow_mut();
+        let px = m.entry((c.c, c.attr)).or_insert_with(|| {
+            X11CharPixmap::new(self.display, self.window, self.depth, &self.font, c.c, &c.attr)
+        });
         unsafe {
-            xlib::XCopyArea(self.display, *pixmap, self.window, self.gc,
-                0, 0, 10, 10, // TODO - width, height
-                0, 0);
+            xlib::XCopyArea(self.display, px.pixmap, self.window, self.gc,
+                0, 0, w, h,
+                (x as i32)*(w as i32), (y as i32)*(h as i32));
         }
     }
 }

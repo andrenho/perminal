@@ -5,6 +5,7 @@ mod terminfo;
 mod terminfo_xterm256;
 mod terminal;
 mod renderer;
+mod x11_charpixmap;
 mod x11_renderer;
 mod matrix;
 mod userevent;
