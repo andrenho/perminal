@@ -7,6 +7,7 @@ mod terminal;
 mod renderer;
 mod x11_charpixmap;
 mod x11_renderer;
+mod chars;
 mod matrix;
 mod userevent;
 mod command;

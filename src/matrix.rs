@@ -1,3 +1,4 @@
+use chars::*;
 use command::Command;
 use command::Command::*;
 use std::cmp::{min,max};
@@ -16,37 +17,6 @@ pub fn P(x: u16, y: u16) -> Position { Position { x:x, y:y } }
 
 
 //
-// Attributes
-//
-#[derive(Clone,Copy,PartialEq,Eq,Hash)]
-pub struct Attributes {
-    pub standout: bool,
-    pub underline: bool,
-    pub reverse: bool,
-    pub blink: bool,
-    pub bold: bool,
-    pub dim: bool,
-    pub invisible: bool,
-    pub protected: bool,
-    pub acs: bool,
-}
-impl Default for Attributes {
-    fn default() -> Attributes {
-        Attributes {
-            standout: false,
-            underline: false,
-            reverse: false,
-            blink: false,
-            bold: false,
-            dim: false,
-            invisible: false,
-            protected: false,
-            acs: false,
-        }
-    }
-}
-
-//
 // CharCell
 //
 #[derive(Clone,Copy)]
@@ -57,6 +27,7 @@ pub struct CharCell {
 impl Default for CharCell {
     fn default() -> CharCell { CharCell { c: ' ', attr: Default::default() } }
 }
+
 
 //
 // Matrix
@@ -325,5 +296,6 @@ impl Matrix {
         positions
     }
 }
+
 
 // vim: ts=4:sw=4:sts=4:expandtab

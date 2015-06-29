@@ -1,11 +1,14 @@
 extern crate bmp;
-use self::bmp::Image;
+use self::bmp::*;
 
 use font::*;
-use matrix::Attributes;
+use chars::Attributes;
+use chars::Color;
 
 pub struct BitmapFont {
     image: Image,
+    fg: Pixel,
+    bg: Pixel,
 }
 
 impl BitmapFont {
@@ -15,6 +18,8 @@ impl BitmapFont {
         });
         BitmapFont {
             image: img,
+            fg: img.get_pixel(0, 0),
+            bg: img.get_pixel(0, 0),
         }
     }
 }

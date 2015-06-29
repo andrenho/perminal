@@ -1,10 +1,5 @@
-use matrix::Attributes;
-
-pub struct Color {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
-}
+use chars::Attributes;
+use chars::Color;
 
 pub struct CharImage {
     pub w: u32,

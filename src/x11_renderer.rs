@@ -15,6 +15,7 @@ use renderer::Renderer;
 use userevent::UserEvent;
 use userevent::UserEvent::*;
 use matrix::*;
+use chars::*;
 use font::Font;
 use x11_charpixmap::X11CharPixmap;
 
@@ -23,7 +24,7 @@ pub struct X11Renderer<F:Font> {
     font: F,
     display: *mut xlib::Display,
     #[allow(dead_code)] screen_num: i32,
-    window: c_uint,
+    window: xlib::Window,
     gc: *mut xlib::_XGC,
     depth: i32,
     char_pxmap: RefCell<HashMap<(char, Attributes), X11CharPixmap>>,
