@@ -1,19 +1,19 @@
-.DEFAULT_GOAL = perminal   # TODO
-
+.DEFAULT_GOAL = perminal
 
 #
 # sources
 # 
 
-SRC=main.cc
+SRC=main.cc \
+    renderer/xcbrenderer.cc
 
 #
 # compilation options
 #
 
 # libraries
-#CPPFLAGS += `pkg-config --cflags sdl2 SDL2_ttf` 
-LDFLAGS += -lpthread
+CPPFLAGS += `pkg-config --cflags xcb` 
+LDFLAGS += `pkg-config --libs xcb` -lpthread
 
 # header directory
 CPPFLAGS += -Iemulator -Iterminal -Irenderer

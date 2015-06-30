@@ -6,13 +6,23 @@
 
 class XcbRenderer : public Renderer {
 public:
-    explicit XcbRenderer(Font const& font) : font(font) {}
-    bool Running() const { return true; }
-    vector<UserEvent> GetEvents() const { return {}; }
-    void Update(Matrix const& matrix) const { (void) matrix; }
+    explicit XcbRenderer(Font const& font);
+    ~XcbRenderer();
+
+    vector<UserEvent> GetEvents() const;
+    void Update(Matrix const& matrix) const;
+
+    bool Running() const { return active; }
 
 private:
     Font const& font;
+    bool active = true;
+    struct xcb_connection_t *c;
+
+    XcbRenderer(XcbRenderer const&) = delete;
+    XcbRenderer(XcbRenderer&&) = delete;
+    XcbRenderer& operator=(XcbRenderer const&) = delete;
+    XcbRenderer& operator=(XcbRenderer&&) = delete;
 };
 
 #endif

@@ -1,6 +1,8 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#include <stdexcept>
+#include <string>
 #include <vector>
 using namespace std;
 
@@ -13,6 +15,13 @@ public:
     virtual bool Running() const = 0;
     virtual vector<UserEvent> GetEvents() const = 0;
     virtual void Update(Matrix const& matrix) const = 0;
+};
+
+//
+// excpetions
+//
+struct RendererInitException : public runtime_error {
+    RendererInitException(string const& msg) : runtime_error(msg) {}
 };
 
 #endif

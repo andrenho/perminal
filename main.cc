@@ -1,5 +1,7 @@
 #include <cstdint>
+#include <cstdlib>
 #include <memory>
+#include <string>
 #include <vector>
 #include <thread>
 using namespace std;
@@ -19,31 +21,38 @@ int main(int argc, char** argv)
     (void) argc;
     (void) argv;
 
-    const PTY plugin;
-    const Terminal terminal;
+    try {
 
-    const BitmapFont font("Sleroux_800x300.bmp");
-    const XcbRenderer renderer(move(font));
+        const PTY plugin;
+        const Terminal terminal;
 
-    // get user input
-    thread t_output([&terminal, &renderer, &plugin] {
-        while(terminal.Alive() && renderer.Running()) {
-            vector<UserEvent> events = renderer.GetEvents();
-            for(auto const& event: events) {
-                vector<uint8_t> data = terminal.ParseEvent(event);
-                plugin.Write(data);
+        const BitmapFont font("Sleroux_800x300.bmp");
+        const XcbRenderer renderer(font);
+
+        // get user input
+        thread t_output([&terminal, &renderer, &plugin] {
+            while(terminal.Alive() && renderer.Running()) {
+                vector<UserEvent> events = renderer.GetEvents();
+                for(auto const& event: events) {
+                    vector<uint8_t> data = terminal.ParseEvent(event);
+                    plugin.Write(data);
+                }
             }
+        });
+
+        // output to user
+        while(terminal.Alive() && renderer.Running()) {
+            vector<uint8_t> data = plugin.Read();
+            auto const& matrix = terminal.ParseData(data);
+            renderer.Update(matrix);
         }
-    });
 
-    // output to user
-    while(terminal.Alive() && renderer.Running()) {
-        vector<uint8_t> data = plugin.Read();
-        auto const& matrix = terminal.ParseData(data);
-        renderer.Update(matrix);
+        t_output.join();
+
+    } catch(RendererInitException& e) {
+        fprintf(stderr, "perminal: %s\n", e.what());
+        exit(EXIT_FAILURE);
     }
-
-    t_output.join();
 
     return 0;
 }
