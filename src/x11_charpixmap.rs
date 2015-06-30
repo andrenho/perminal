@@ -21,10 +21,16 @@ impl X11CharPixmap {
             bg_cell.green = (attr.bg_color.g as u16) * 0x100;
             bg_cell.blue = (attr.bg_color.b as u16) * 0x100;
             let bgc = xlib::XAllocColor(display, cmap, &mut bg_cell);
+            let mut fg_cell: xlib::XColor = zeroed();
+            fg_cell.flags= xlib::DoRed | xlib::DoGreen | xlib::DoBlue; 
+            fg_cell.red = (attr.fg_color.r as u16) * 0x100;
+            fg_cell.green = (attr.fg_color.g as u16) * 0x100;
+            fg_cell.blue = (attr.fg_color.b as u16) * 0x100;
+            let bgc = xlib::XAllocColor(display, cmap, &mut fg_cell);
             let mut values: xlib::XGCValues = zeroed();
-            values.foreground = bg_cell.pixel;
+            values.foreground = fg_cell.pixel;
             values.background = bg_cell.pixel;
-            let gc = xlib::XCreateGC(display, window, 0b1100 /* GCForeground */, &mut values);
+            let gc = xlib::XCreateGC(display, window, 0b1100 /* GCForeground | GCBackground */, &mut values);
             xlib::XFillRectangle(display, px, gc, 0, 0, font.char_width(), font.char_height());
             
             // xlib::XDrawPoint(self.display, px, self.gc, 5, 5);
