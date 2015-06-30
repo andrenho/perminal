@@ -37,17 +37,19 @@ impl BitmapFont {
 impl Font for BitmapFont {
 
     fn char_height(&self) -> u32 { 
-        self.image.get_height() / 8 
+        self.image.get_height() / 16
     }
     
     fn char_width(&self) -> u32 { 
-        self.image.get_width() / 8 
+        self.image.get_width() / 16
     }
     
-    fn load_char(&self, c: char, attr: Attributes) -> CharImage { 
+    fn load_char(&self, c: char, attr: &Attributes) -> CharImage { 
         let mut data: Vec<Color> = Vec::with_capacity((self.char_height() * self.char_width()) as usize);
-        for y in 0..self.char_height() {
-            for x in 0..self.char_width() {
+        let px = ((c as u32) % 16) * self.char_width();
+        let py = ((c as u32) / 16) * self.char_height();
+        for y in py..(py+self.char_height()) {
+            for x in px..(px+self.char_width()) {
                 let p = self.image.get_pixel(x, y);
                 if p == self.fg {
                     data.push(attr.fg_color);
@@ -58,7 +60,12 @@ impl Font for BitmapFont {
                 }
             }
         }
-        CharImage { w: self.char_height(), h: self.char_width(), data: data }
+        CharImage { 
+            w: self.char_height(), 
+            h: self.char_width(), 
+            data: data, 
+            bg_color: attr.bg_color,
+        }
     }
 }
 

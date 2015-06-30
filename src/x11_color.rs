@@ -18,7 +18,7 @@ pub struct X11ColorAllocator {
 
 impl X11ColorAllocator {
 
-    fn new(display: *mut xlib::Display) -> Self {
+    pub fn new(display: *mut xlib::Display) -> Self {
         unsafe {
             X11ColorAllocator {
                 cmap:    xlib::XDefaultColormap(display, xlib::XDefaultScreen(display)),
@@ -28,7 +28,7 @@ impl X11ColorAllocator {
         }
     }
 
-    fn get(&self, color: Color) -> c_ulong {
+    pub fn get(&self, color: Color) -> c_ulong {
         let mut m = self.index.borrow_mut();
         *m.entry(color).or_insert_with(|| {
             unsafe {

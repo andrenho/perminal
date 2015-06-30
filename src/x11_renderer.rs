@@ -1,33 +1,39 @@
 use std::ffi::CString;
+use std::ffi::CStr;
+use std::str;
 use std::ptr::{null,null_mut};
 use std::mem::zeroed;
+use std::mem::transmute;
 use std::cell::Cell;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
 extern crate libc;
+use self::libc::c_char;
 use self::libc::c_uint;
 
 extern crate x11;
 use self::x11::xlib;
 
 use renderer::Renderer;
+use userevent::Key::*;
 use userevent::UserEvent;
 use userevent::UserEvent::*;
 use matrix::*;
 use chars::*;
 use font::Font;
 use x11_charpixmap::X11CharPixmap;
+use x11_color::X11ColorAllocator;
 
 pub struct X11Renderer<F:Font> {
-    active: Cell<bool>,
-    font: F,
-    display: *mut xlib::Display,
-    #[allow(dead_code)] screen_num: i32,
-    window: xlib::Window,
-    gc: *mut xlib::_XGC,
-    depth: i32,
+    font:       F,
+    display:    *mut xlib::Display,
+    window:     xlib::Window,
+    gc:         *mut xlib::_XGC,
+    depth:      i32,
+    color_a:    X11ColorAllocator,
     char_pxmap: RefCell<HashMap<(char, Attributes), X11CharPixmap>>,
+    active:     Cell<bool>,
 }
 
 impl<F:Font> X11Renderer<F> {
@@ -60,20 +66,14 @@ impl<F:Font> X11Renderer<F> {
             xlib::XStoreName(display, window, title_str.as_ptr() as *mut _);
 
             // select input
-            xlib::XSelectInput(display, window, xlib::StructureNotifyMask|xlib::SubstructureNotifyMask);
+            xlib::XSelectInput(display, window, 
+                xlib::StructureNotifyMask|xlib::SubstructureNotifyMask|xlib::KeyPressMask);
 
             // show window
             xlib::XMapWindow(display, window);
-            loop {
-                let mut e: xlib::XEvent = zeroed();
-                xlib::XNextEvent(display, &mut e);
-                if e.get_type() == xlib::MapNotify {
-                    break;
-                }
-            }
 
-            // create GC
-            gc = xlib::XCreateGC(display, window, 0, null_mut());
+            // get default GC
+            gc = xlib::XDefaultGC(display, xlib::XDefaultScreen(display));
 
             // find depth
             depth = xlib::XDefaultDepth(display, screen_num);
@@ -81,13 +81,13 @@ impl<F:Font> X11Renderer<F> {
 
         // create structure
         X11Renderer {
-            active:     Cell::new(true),
             font:       font,
+            color_a:    X11ColorAllocator::new(display),
             display:    display,
             window:     window,
-            screen_num: screen_num,
             gc:         gc,
             depth:      depth,
+            active:     Cell::new(true),
             char_pxmap: RefCell::new(HashMap::new()),
         }
     }
@@ -102,13 +102,45 @@ impl<F:Font> Renderer for X11Renderer<F> {
     fn get_user_input(&self) -> Vec<UserEvent> {
         unsafe {
             let mut event: xlib::XEvent = zeroed();
-            xlib::XNextEvent(self.display, &mut event);
-            match event.get_type() {
-                xlib::DestroyNotify => self.active.set(false),
-                _ => (),
+            if xlib::XPending(self.display) > 0 {
+                xlib::XNextEvent(self.display, &mut event);
+                match event.get_type() {
+                    xlib::DestroyNotify => {
+                        self.active.set(false);
+                        vec![]
+                    },
+                    xlib::KeyPress => {
+                        let k_ev: &mut xlib::XKeyEvent = transmute(&mut event);
+                        /* TODO - support dead keys. This is pretty complex but can be
+                           done creating a input context and using XmbLookupString.
+                           See <http://www.sbin.org/doc/Xlib/chapt_11.html> */
+                        let mut key = [0 as c_char, 4]; // CString::new("    ").unwrap();
+                        let mut keysym: xlib::KeySym = zeroed();
+                        let mut compose: xlib::XComposeStatus = zeroed();
+                        let c = xlib::XLookupString(k_ev, key.as_mut_ptr(), 4, &mut keysym, &mut compose);
+                        println!("{}", key[0]);
+
+                        match xlib::XLookupKeysym(k_ev, 0) {
+                            c @ 1...255 => vec![KeyPress { key: Char(c as u8 as char), control: false, shift: false, alt: false }],
+                            c @ _ => {
+                                let k = match str::from_utf8(CStr::from_ptr(xlib::XKeysymToString(c)).to_bytes()).unwrap() {
+                                    "Return" => Some(Char(13 as char)),
+                                    "F12"    => Some(F12),
+                                    _        => None,
+                                };
+                                match k {
+                                    Some(k) => vec![KeyPress { key: k, control: false, shift: false, alt: false }],
+                                    None    => vec![],
+                                }
+                            },
+                        }
+                    },
+                    _ => vec![],
+                }
+            } else {
+                vec![]
             }
         }
-        vec![]
     }
 
     fn update(&self, matrix: &mut Matrix) {
@@ -133,7 +165,7 @@ impl<F:Font> X11Renderer<F> {
         let h = self.font.char_height();
         let mut m = self.char_pxmap.borrow_mut();
         let px = m.entry((c.c, c.attr)).or_insert_with(|| {
-            X11CharPixmap::new(self.display, self.window, self.depth, &self.font, c.c, &c.attr)
+            X11CharPixmap::new(self.display, self.window, self.depth, &self.color_a, &self.font, c.c, &c.attr)
         });
         unsafe {
             xlib::XCopyArea(self.display, px.pixmap, self.window, self.gc,
