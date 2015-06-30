@@ -16,10 +16,20 @@ impl BitmapFont {
         let img = bmp::open(filename).unwrap_or_else(|e| {
             panic!("Failed to open: {}", e)
         });
+        let bg = img.get_pixel(0, 0);
+        let mut fg = bg;
+        for (x,y) in img.coordinates() {
+            let c = img.get_pixel(x,y);
+            if c != bg {
+                fg = c;
+                break;
+            }
+        }
+        if fg == bg { panic!("Image has only one color"); }
         BitmapFont {
+            fg: fg,
+            bg: bg,
             image: img,
-            fg: img.get_pixel(0, 0),
-            bg: img.get_pixel(0, 0),
         }
     }
 }
@@ -39,7 +49,13 @@ impl Font for BitmapFont {
         for y in 0..self.char_height() {
             for x in 0..self.char_width() {
                 let p = self.image.get_pixel(x, y);
-                data.push(Color { r: p.r, g: p.g, b: p.b });
+                if p == self.fg {
+                    data.push(attr.fg_color);
+                } else if p == self.bg {
+                    data.push(attr.bg_color);
+                } else {
+                    panic!("Invalid color in BMP!");
+                }
             }
         }
         CharImage { w: self.char_height(), h: self.char_width(), data: data }
