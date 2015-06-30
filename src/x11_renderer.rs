@@ -26,12 +26,17 @@ use x11_charpixmap::X11CharPixmap;
 use x11_color::X11ColorAllocator;
 
 pub struct X11Renderer<F:Font> {
+    // associated values
     font:       F,
+    color_a:    X11ColorAllocator,
+    // X11 status
     display:    *mut xlib::Display,
     window:     xlib::Window,
     gc:         *mut xlib::_XGC,
     depth:      i32,
-    color_a:    X11ColorAllocator,
+    im:         xlib::XIM,
+    ic:         xlib::XIC,
+    // mutable data
     char_pxmap: RefCell<HashMap<(char, Attributes), X11CharPixmap>>,
     active:     Cell<bool>,
 }
@@ -43,6 +48,8 @@ impl<F:Font> X11Renderer<F> {
         let screen_num;
         let gc;
         let depth;
+        let im;
+        let ic;
         unsafe {
             // open display
             display = xlib::XOpenDisplay(null());
@@ -77,6 +84,12 @@ impl<F:Font> X11Renderer<F> {
 
             // find depth
             depth = xlib::XDefaultDepth(display, screen_num);
+            
+            // initialize i18n
+            im = xlib::XOpenIM(display, null_mut(), null_mut(), null_mut());
+            println!("{:?}", im);
+            ic = xlib::XCreateIC(im);
+            println!("{:?}", ic);
         }
 
         // create structure
@@ -87,6 +100,8 @@ impl<F:Font> X11Renderer<F> {
             window:     window,
             gc:         gc,
             depth:      depth,
+            im:         im,
+            ic:         ic,
             active:     Cell::new(true),
             char_pxmap: RefCell::new(HashMap::new()),
         }
@@ -110,30 +125,8 @@ impl<F:Font> Renderer for X11Renderer<F> {
                         vec![]
                     },
                     xlib::KeyPress => {
-                        let k_ev: &mut xlib::XKeyEvent = transmute(&mut event);
-                        /* TODO - support dead keys. This is pretty complex but can be
-                           done creating a input context and using XmbLookupString.
-                           See <http://www.sbin.org/doc/Xlib/chapt_11.html> */
-                        let mut key = [0 as c_char, 4]; // CString::new("    ").unwrap();
-                        let mut keysym: xlib::KeySym = zeroed();
-                        let mut compose: xlib::XComposeStatus = zeroed();
-                        let c = xlib::XLookupString(k_ev, key.as_mut_ptr(), 4, &mut keysym, &mut compose);
-                        println!("{}", key[0]);
-
-                        match xlib::XLookupKeysym(k_ev, 0) {
-                            c @ 1...255 => vec![KeyPress { key: Char(c as u8 as char), control: false, shift: false, alt: false }],
-                            c @ _ => {
-                                let k = match str::from_utf8(CStr::from_ptr(xlib::XKeysymToString(c)).to_bytes()).unwrap() {
-                                    "Return" => Some(Char(13 as char)),
-                                    "F12"    => Some(F12),
-                                    _        => None,
-                                };
-                                match k {
-                                    Some(k) => vec![KeyPress { key: k, control: false, shift: false, alt: false }],
-                                    None    => vec![],
-                                }
-                            },
-                        }
+                        let mut k_ev: &mut xlib::XKeyEvent = transmute(&mut event);
+                        self.key_event(k_ev)
                     },
                     _ => vec![],
                 }
@@ -159,6 +152,7 @@ impl<F:Font> Renderer for X11Renderer<F> {
 
 
 impl<F:Font> X11Renderer<F> {
+
     fn draw_char(&self, matrix: &Matrix, x: u16, y: u16) {
         let c = matrix.cells[&P(x,y)];
         let w = self.font.char_width();
@@ -173,6 +167,34 @@ impl<F:Font> X11Renderer<F> {
                 (x as i32)*(w as i32), (y as i32)*(h as i32));
         }
     }
+
+
+    unsafe fn key_event(&self, k_ev: &mut xlib::XKeyEvent) -> Vec<UserEvent> {
+        /* TODO - support dead keys. This is pretty complex but can be
+           done creating a input context and using XmbLookupString.
+           See <http://www.sbin.org/doc/Xlib/chapt_11.html> */
+        let mut key = [0 as c_char, 4]; // CString::new("    ").unwrap();
+        let mut keysym: xlib::KeySym = zeroed();
+        let mut status: xlib::Status = zeroed();
+        let c = xlib::XmbLookupString(self.ic, k_ev, key.as_mut_ptr(), 4, &mut keysym, &mut status);
+        println!("{} {}", c, key[0]);
+
+        match xlib::XLookupKeysym(k_ev, 0) {
+            c @ 1...255 => vec![KeyPress { key: Char(c as u8 as char), control: false, shift: false, alt: false }],
+            c @ _ => {
+                let k = match str::from_utf8(CStr::from_ptr(xlib::XKeysymToString(c)).to_bytes()).unwrap() {
+                    "Return" => Some(Char(13 as char)),
+                    "F12"    => Some(F12),
+                    _        => None,
+                };
+                match k {
+                    Some(k) => vec![KeyPress { key: k, control: false, shift: false, alt: false }],
+                    None    => vec![],
+                }
+            },
+        }
+    }
+
 }
 
 
