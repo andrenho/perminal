@@ -10,7 +10,7 @@ using namespace std;
 
 class BitmapFont : public Font {
 public:
-    static BitmapFont FromXBM(int w, int h, char* data);
+    static BitmapFont FromXBM(int w, int h, unsigned char* data);
 
 private:
     BitmapFont(int char_width, int char_height, int image_width, int image_height);

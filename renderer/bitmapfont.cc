@@ -11,7 +11,7 @@ BitmapFont::BitmapFont(int char_width, int char_height, int image_width, int ima
 
 
 BitmapFont 
-BitmapFont::FromXBM(int w, int h, char* data)
+BitmapFont::FromXBM(int w, int h, unsigned char* data)
 {
     D("Loading XBM image...");
 
@@ -19,11 +19,12 @@ BitmapFont::FromXBM(int w, int h, char* data)
 
     BitmapFont f(w/16, h/16, w, h);
     f.data.reserve(w * h);
+    uint8_t bg = data[0] & 1;
     for(int y=0; y<h; ++y) {
         for(int k=0; k<(w/8); ++k) {
-            uint8_t px = static_cast<uint8_t>(data[(y*(w/8))+k]);
-            for(int i=0; i<8; ++i) {
-                f.data.push_back(((px >> i) & 1) ? 0 : 255);
+            uint8_t px = data[(y*(w/8))+k];
+            for(int i=0; i<8; ++i) {  // TODO - check if is divisible by 8
+                f.data.push_back(((px >> i) & 1) == bg ? 0 : 255);
                 ++c;
             }
         }

@@ -18,10 +18,12 @@ using namespace std;
 #include "bitmapfont.h"
 #include "xcbrenderer.h"
 
-#include "VGA8x16.xbm"
+#include "Vintl01.xbm"
 
 Config config;
+#ifdef DEBUG
 Debug debug;
+#endif
 
 int main(int argc, char** argv)
 {
@@ -32,7 +34,7 @@ int main(int argc, char** argv)
         const PTY plugin;
         const Terminal terminal;
 
-        const BitmapFont font = BitmapFont::FromXBM(VGA8x16_width, VGA8x16_height, VGA8x16_bits);
+        const BitmapFont font = BitmapFont::FromXBM(Vintl01_width, Vintl01_height, Vintl01_bits);
         const XcbRenderer renderer(font);
 
         // get user input

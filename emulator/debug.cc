@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include <cstdarg>
 
+#ifdef DEBUG
+
 void 
 Debug::Info(const char* fmt, ...) const
 {
@@ -61,5 +63,7 @@ Debug::Assert(function<bool()> v_func, const char* fmt, ...) const
         abort();
     }
 }
+
+#endif
 
 // vim: ts=4:sw=4:sts=4:expandtab

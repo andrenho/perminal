@@ -77,9 +77,9 @@ XcbRenderer::GetEvents() const
     case XCB_EXPOSE:
         D("Expose event detected.");
         RedrawBorder();
-        DrawChar(0, 0, 'A', { { 200, 200, 200 }, { 20, 20, 20 } });
-        DrawChar(1, 0, 'B', { { 200, 200, 200 }, { 20, 20, 20 } });
-        DrawChar(2, 0, 'C', { { 200, 200, 200 }, { 20, 20, 20 } });
+        DrawChar(0, 0, 'A', { { 255, 255, 255 }, { 0, 0, 0 } });
+        DrawChar(1, 0, 'B', { { 255, 255, 255 }, { 0, 0, 0 } });
+        DrawChar(2, 0, 'C', { { 255, 255, 255 }, { 0, 0, 0 } });
         xcb_flush(c);
         break;
     case XCB_DESTROY_NOTIFY:

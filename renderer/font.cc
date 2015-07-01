@@ -11,7 +11,7 @@ Font::LoadChar(char32_t c, Attributes const& attr) const
         y_in_image = (c / 16) * char_height;
     for(int y = y_in_image; y<(y_in_image + char_height); ++y) {
         for(int x = x_in_image; x<(x_in_image + char_width); ++x) {
-            uint8_t px = this->data[(y*image_height)+x];
+            uint8_t px = this->data[(y*image_width)+x];
             double ppx = static_cast<double>(px) / 255.0;
             ch.data.push_back({
                 attr.bg_color.r + (static_cast<double>(attr.fg_color.r-attr.bg_color.r) * ppx),
@@ -21,7 +21,7 @@ Font::LoadChar(char32_t c, Attributes const& attr) const
         }
     }
     ASSERT(static_cast<int>(ch.data.size()) == (char_width*char_height), 
-            "ch.data.size was expected to be %d, but is %d", (char_width*char_height), ch.data.size());
+            "ch.data.size was expected to be %d, but is %ld", (char_width*char_height), ch.data.size());
     return ch;
 }
 
