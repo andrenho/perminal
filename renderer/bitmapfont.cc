@@ -23,7 +23,7 @@ BitmapFont::FromXBM(int w, int h, char* data)
         for(int k=0; k<(w/8); ++k) {
             uint8_t px = static_cast<uint8_t>(data[(y*(w/8))+k]);
             for(int i=0; i<8; ++i) {
-                f.data.push_back(((px << i) & 1) ? 0 : 255);
+                f.data.push_back(((px >> i) & 1) ? 0 : 255);
                 ++c;
             }
         }
