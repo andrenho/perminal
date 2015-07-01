@@ -23,14 +23,19 @@ public:
 
 private:
     void RedrawBorder() const;
+    void DrawChar(int x, int y, char32_t c, Attributes const& attr) const;
+
     uint32_t GetColor(Color const& color) const;
+    uint32_t GetCharPixmap(char32_t c, Attributes const& attr) const;
+    void SetGCForeground(Color const& color) const;
 
     // color memoization
     mutable map<Color, 
                 unique_ptr<struct xcb_alloc_color_reply_t, 
                            function<void(struct xcb_alloc_color_reply_t*)>>
                > colors = {};
-
+    mutable map<Cell, uint32_t> ch_pixmaps = {};
+        
     // class data
     Font const& font;
     mutable bool active = true;
@@ -41,6 +46,7 @@ private:
     uint32_t window;
     uint32_t gc = 0;
     uint32_t colormap = 0;
+    uint8_t  depth = 0;
 
     XcbRenderer(XcbRenderer const&) = delete;
     XcbRenderer(XcbRenderer&&) = delete;

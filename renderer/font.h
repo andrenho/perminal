@@ -17,14 +17,20 @@ struct CharImage {
 class Font {
 public:
     virtual ~Font() {}
-    virtual CharImage LoadChar(char32_t c, Attributes const& attr) = 0;
+    virtual CharImage LoadChar(char32_t c, Attributes const& attr) const;
 
     int CharWidth() const { return char_width; }
     int CharHeight() const { return char_height; }
 
 protected:
-    int char_width = 0;
-    int char_height = 0;
+    Font(int char_width, int char_height, int image_width, int image_height)
+        : char_width(char_width), char_height(char_height), image_width(image_width), image_height(image_height) {}
+
+    int char_width;
+    int char_height;
+    int image_width;
+    int image_height;
+    vector<uint8_t> data = {};
 };
 
 #endif

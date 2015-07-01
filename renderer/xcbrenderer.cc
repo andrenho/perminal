@@ -22,6 +22,7 @@ XcbRenderer::XcbRenderer(Font const& font)
         screen = iter.data;
         break;
     }
+    depth = screen->root_depth;
     D("Info about screen %d", screen->root);   
     D("  width:  %d", screen->width_in_pixels);
     D("  height: %d", screen->height_in_pixels);
@@ -76,6 +77,9 @@ XcbRenderer::GetEvents() const
     case XCB_EXPOSE:
         D("Expose event detected.");
         RedrawBorder();
+        DrawChar(0, 0, 'A', { { 200, 200, 200 }, { 20, 20, 20 } });
+        DrawChar(1, 0, 'A', { { 200, 200, 200 }, { 20, 20, 20 } });
+        DrawChar(2, 0, 'A', { { 200, 200, 200 }, { 20, 20, 20 } });
         xcb_flush(c);
         break;
     case XCB_DESTROY_NOTIFY:
@@ -92,23 +96,87 @@ void
 XcbRenderer::Update(Matrix const& matrix) const 
 { 
     (void) matrix;
+
+    // xcb_flush(c);
+}
+
+
+void 
+XcbRenderer::DrawChar(int x, int y, char32_t ch, Attributes const& attr) const
+{
+    x = config.BorderSize.LeftRight + (x * font.CharWidth());
+    y = config.BorderSize.TopBottom + (y * font.CharHeight());
+
+    xcb_copy_area(c, GetCharPixmap(ch, attr), window, gc, 
+            0, 0, x, y, font.CharWidth(), font.CharHeight());
 }
 
 
 void 
 XcbRenderer::RedrawBorder() const
 {
-    uint32_t p = GetColor(config.BorderColor);
-    const uint32_t value[1] = { p };
-    xcb_change_gc(c, gc, XCB_GC_FOREGROUND, value);
-
     xcb_rectangle_t rs[] = { 
         { 0, 0, config.BorderSize.LeftRight, win_h }, 
         { win_w-config.BorderSize.LeftRight, 0, config.BorderSize.LeftRight, win_h }, 
         { 0, 0, win_w, config.BorderSize.TopBottom },
         { 0, win_h-config.BorderSize.TopBottom, win_w, config.BorderSize.TopBottom },
     };
+
+    SetGCForeground(config.BorderColor);
     xcb_poly_fill_rectangle(c, window, gc, 4, rs);
+}
+
+
+uint32_t 
+XcbRenderer::GetCharPixmap(char32_t ch, Attributes const& attr) const
+{
+    Cell cell{ ch, attr };
+    auto ci = ch_pixmaps.find(cell);
+    if(ci == ch_pixmaps.end()) {
+
+        // create pixmap
+        uint32_t px = xcb_generate_id(c);
+        CharImage img = font.LoadChar(ch, attr);
+        xcb_create_pixmap(c, depth, px, window, img.w, img.h);
+
+        // draw background
+        SetGCForeground(attr.bg_color);
+        xcb_rectangle_t r[] = { { 0, 0, img.w, img.h } };
+        xcb_poly_fill_rectangle(c, px, gc, 1, r);
+
+        // create list points for each color
+        map<Color, vector<xcb_point_t>> pts = {};
+        for(int i=0; i<(img.w * img.h); ++i) {
+            Color color = img.data[i];
+            if(color != attr.bg_color) {
+                xcb_point_t pos { (i % img.w), (i / img.w) };
+                auto cc = pts.find(color);
+                if(cc == pts.end()) {
+                    pts[color] = { move(pos) };
+                } else {
+                    cc->second.emplace_back(move(pos));
+                }
+            }
+        }
+
+        // draw foreground
+        for(auto const& kv: pts) {
+            SetGCForeground(kv.first);
+            xcb_poly_point(c, XCB_COORD_MODE_ORIGIN, px, gc, kv.second.size(), &kv.second[0]);
+        }
+        
+        // store in map
+        ch_pixmaps[cell] = px;
+        /* XXX: important! This might represent a leak in the X server. 
+         * It's important to remember that, if the pixmaps are no longer
+         * needed (for example, when the user changes the font) to call
+         * xcb_free_pixmap for the pixmaps stored. */
+
+        D("Created char for '%c' (0x%x).", ch, ch);
+        return px;
+    } else {
+        return ci->second;
+    }
 }
 
 
@@ -119,7 +187,7 @@ XcbRenderer::GetColor(Color const& color) const
     auto ci = colors.find(color);
     if(ci == colors.end()) {
         xcb_alloc_color_reply_t* rep = xcb_alloc_color_reply(c,
-                xcb_alloc_color(c, colormap, color.r*100, color.g*100, color.b*100), 
+                xcb_alloc_color(c, colormap, color.r*0x100, color.g*0x100, color.b*0x100), 
                 nullptr);
         colors[color] = unique_ptr<struct xcb_alloc_color_reply_t,
             function<void(xcb_alloc_color_reply_t*)>>(rep, [](xcb_alloc_color_reply_t* r) {
@@ -131,6 +199,15 @@ XcbRenderer::GetColor(Color const& color) const
     } else {
         return ci->second->pixel;
     }
+}
+
+
+void 
+XcbRenderer::SetGCForeground(Color const& color) const
+{
+    uint32_t p = GetColor(color);
+    const uint32_t value[1] = { p };
+    xcb_change_gc(c, gc, XCB_GC_FOREGROUND, value);
 }
 
 

@@ -5,22 +5,43 @@
 
 struct Color { 
     uint8_t r, g, b;
+
+    inline uint64_t hash() const {
+        return (r << 16) + (g << 8) + b;
+    }
+
     inline bool operator<(Color const& other) const { 
-        uint32_t self = (r << 16) + (g << 8) + b,
-                 oth  = (other.r << 16) + (other.g << 8) + other.b;
-        return self < oth;
+        return this->hash() < other.hash();
+    }
+
+    inline bool operator!=(Color const& other) const {
+        return r != other.r || g != other.g || b != other.b;
     }
 };
 static_assert(std::is_pod<Color>::value, "Color must be a POD");
 
 
-struct Attributes {};  // TODO
+struct Attributes {
+    Color bg_color, fg_color;
+
+    inline uint64_t hash() const {
+        return (fg_color.hash() << 24) + bg_color.hash();  // TODO
+    }
+};
 static_assert(std::is_pod<Attributes>::value, "Attributes must be a POD");
 
 
 struct Cell {
     char32_t c;
     Attributes attr;
+
+    inline uint64_t hash() const {
+        return c + (attr.hash() << 32);
+    }
+
+    inline bool operator<(Cell const& other) const {
+        return this->hash() < other.hash();
+    }
 };
 static_assert(std::is_pod<Cell>::value, "Cell must be a POD");
 

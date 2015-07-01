@@ -6,7 +6,9 @@
 
 SRC=main.cc 			\
     emulator/debug.cc		\
-    renderer/xcbrenderer.cc
+    renderer/xcbrenderer.cc	\
+    renderer/font.cc		\
+    renderer/bitmapfont.cc
 
 #
 # compilation options
