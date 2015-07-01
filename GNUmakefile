@@ -46,6 +46,7 @@ ifeq (${WARNINGS},1)
       -Wunused-parameter -Wunused-value  -Wunused-variable  -Wvariadic-macros \
       -Wvolatile-register-var  -Wwrite-strings -Wfatal-errors -Winvalid-pch -Weffc++ \
       -Wold-style-cast -Wsign-promo -Winline -Wswitch-enum -Wmissing-declarations -Wfatal-errors
+  CXXFLAGS += -Wno-narrowing
   ifeq (${CXX},g++)
     CXXFLAGS += -Wunsafe-loop-optimizations -Wzero-as-null-pointer-constant -Wuseless-cast
   endif

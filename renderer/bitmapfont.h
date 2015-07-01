@@ -9,6 +9,7 @@ using namespace std;
 class BitmapFont : public Font {
 public:
     explicit BitmapFont(string const& filename) { (void) filename; }
+    virtual CharImage LoadChar(char32_t c, Attributes const& attr) { (void)c; (void)attr; return {}; }
 };
 
 #endif

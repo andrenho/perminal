@@ -59,8 +59,6 @@ XcbRenderer::XcbRenderer(Font const& font)
     uint32_t value[2] = { screen->black_pixel, 0, };
     xcb_create_gc(c, gc, window, XCB_GC_FOREGROUND | XCB_GC_GRAPHICS_EXPOSURES, value);
     D("Created GC.");
-    
-    RedrawBorder();
 }
 
 
@@ -75,15 +73,13 @@ XcbRenderer::GetEvents() const
 { 
     xcb_generic_event_t* e = xcb_wait_for_event(c);
     switch(e->response_type & ~0x80) {
-    case XCB_MAP_NOTIFY:
-        D("map");
-        break;
     case XCB_EXPOSE:
+        D("Expose event detected.");
         RedrawBorder();
-        D("expose");
+        xcb_flush(c);
         break;
     case XCB_DESTROY_NOTIFY:
-        D("quit");
+        D("Quit event detected.");
         active = false;
         break;
     }
@@ -102,29 +98,39 @@ XcbRenderer::Update(Matrix const& matrix) const
 void 
 XcbRenderer::RedrawBorder() const
 {
-    DoWithColor(config.BorderColor, [&](uint32_t p) {
-        const uint32_t value[2] = { p };
-        xcb_change_gc(c, gc, XCB_GC_FOREGROUND, value);
-        
-        xcb_rectangle_t rs[] = { 
-            { 0, 0, config.BorderSize.LeftRight, win_h }, 
-            { win_w-config.BorderSize.LeftRight, 0, config.BorderSize.LeftRight, win_h }, 
-            { 0, 0, win_w, config.BorderSize.TopBottom },
-            { 0, win_h-config.BorderSize.TopBottom, win_w, config.BorderSize.TopBottom },
-        };
-        xcb_poly_fill_rectangle(c, window, gc, 4, rs);
-    });
+    uint32_t p = GetColor(config.BorderColor);
+    const uint32_t value[1] = { p };
+    xcb_change_gc(c, gc, XCB_GC_FOREGROUND, value);
+
+    xcb_rectangle_t rs[] = { 
+        { 0, 0, config.BorderSize.LeftRight, win_h }, 
+        { win_w-config.BorderSize.LeftRight, 0, config.BorderSize.LeftRight, win_h }, 
+        { 0, 0, win_w, config.BorderSize.TopBottom },
+        { 0, win_h-config.BorderSize.TopBottom, win_w, config.BorderSize.TopBottom },
+    };
+    xcb_poly_fill_rectangle(c, window, gc, 4, rs);
 }
 
 
-uint32_t 
-XcbRenderer::DoWithColor(Color const& color, function<void(uint32_t)> f) const
+uint32_t
+XcbRenderer::GetColor(Color const& color) const
 {
-    xcb_alloc_color_reply_t* rep = xcb_alloc_color_reply(c,
-            xcb_alloc_color(c, colormap, color.r*100, color.g*100, color.b*100), 
-            nullptr);
-    f(rep->pixel);
-    free(rep);
+    // look for color in memo -- if not found, allocate it
+    auto ci = colors.find(color);
+    if(ci == colors.end()) {
+        xcb_alloc_color_reply_t* rep = xcb_alloc_color_reply(c,
+                xcb_alloc_color(c, colormap, color.r*100, color.g*100, color.b*100), 
+                nullptr);
+        colors[color] = unique_ptr<struct xcb_alloc_color_reply_t,
+            function<void(xcb_alloc_color_reply_t*)>>(rep, [](xcb_alloc_color_reply_t* r) {
+                D("Color #%02X%02X%02X deallocated.", (r->red/100), (r->green/100), (r->blue/100));
+                free(r);
+            });
+        D("Color #%02X%02X%02X allocated.", color.r, color.g, color.b);
+        return rep->pixel;
+    } else {
+        return ci->second->pixel;
+    }
 }
 
 

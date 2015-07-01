@@ -21,7 +21,7 @@ public:
 // excpetions
 //
 struct RendererInitException : public runtime_error {
-    RendererInitException(string const& msg) : runtime_error(msg) {}
+    explicit RendererInitException(string const& msg) : runtime_error(msg) {}
 };
 
 #endif

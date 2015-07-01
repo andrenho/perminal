@@ -1,11 +1,13 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include <cstdint>
+
 #include "chars.h"
 
 struct TBorderSize {
-    int LeftRight;
-    int TopBottom;
+    uint16_t LeftRight;
+    uint16_t TopBottom;
 };
 
 class Config {
