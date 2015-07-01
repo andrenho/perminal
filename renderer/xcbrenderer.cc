@@ -1,6 +1,10 @@
 #include "xcbrenderer.h"
 
 #include <xcb/xcb.h>
+#include <xkbcommon/xkbcommon.h>
+#include <xkbcommon/xkbcommon-x11.h>
+
+#include <cassert>
 
 #include "config.h"
 #include "debug.h"
@@ -35,6 +39,7 @@ XcbRenderer::XcbRenderer(Font const& font)
         screen->white_pixel,
         XCB_EVENT_MASK_STRUCTURE_NOTIFY 
             | XCB_EVENT_MASK_EXPOSURE
+            | XCB_EVENT_MASK_KEY_PRESS
     };
 
     // create colormap & draw border
@@ -60,6 +65,17 @@ XcbRenderer::XcbRenderer(Font const& font)
     uint32_t value[2] = { screen->black_pixel, 0, };
     xcb_create_gc(c, gc, window, XCB_GC_FOREGROUND | XCB_GC_GRAPHICS_EXPOSURES, value);
     D("Created GC.");
+
+    // TODO - initialize keyboard configuration
+    // http://xkbcommon.org/doc/current/md_doc_quick-guide.html
+    struct xkb_context* ctx;
+    ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    assert(ctx);
+
+    int32_t device_id = xkb_x11_get_core_keyboard_device_id(c);
+    assert(device_id != -1);
+    struct xkb_keymap* keymap = xkb_x11_keymap_new_from_device(ctx, c, device_id, XKB_KEYMAP_COMPILE_NO_FLAGS);
+    assert(keymap);
 }
 
 
@@ -81,6 +97,11 @@ XcbRenderer::GetEvents() const
         DrawChar(1, 0, 'B', { { 255, 255, 255 }, { 0, 0, 0 } });
         DrawChar(2, 0, 'C', { { 255, 255, 255 }, { 0, 0, 0 } });
         xcb_flush(c);
+        break;
+    case XCB_KEY_PRESS: {
+            xcb_key_press_event_t* ev = reinterpret_cast<xcb_key_press_event_t*>(e);
+            D("%d %d %d", ev->detail, ev->sequence, ev->state);
+        }
         break;
     case XCB_DESTROY_NOTIFY:
         D("Quit event detected.");

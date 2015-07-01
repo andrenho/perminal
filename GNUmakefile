@@ -15,8 +15,8 @@ SRC=main.cc 			\
 #
 
 # libraries
-CPPFLAGS += `pkg-config --cflags xcb` 
-LDFLAGS += `pkg-config --libs xcb` -lpthread
+CPPFLAGS += `pkg-config --cflags xcb xkbcommon xkbcommon-x11` 
+LDFLAGS += `pkg-config --libs xcb xkbcommon xkbcommon-x11` -lpthread
 
 # header directory
 CPPFLAGS += -Iemulator -Iterminal -Irenderer
