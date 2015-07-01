@@ -6,20 +6,24 @@
 #include <thread>
 using namespace std;
 
+#include "config.h"
 #include "plugin.h"
 #include "terminal.h"
 #include "font.h"
 #include "renderer.h"
 #include "userevent.h"
+#include "debug.h"
 
 #include "pty.h"
 #include "bitmapfont.h"
 #include "xcbrenderer.h"
 
+Config config;
+Debug debug;
+
 int main(int argc, char** argv)
 {
-    (void) argc;
-    (void) argv;
+    config.Initialize(argc, argv);
 
     try {
 

@@ -1,10 +1,22 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include "chars.h"
+
+struct TBorderSize {
+    int LeftRight;
+    int TopBottom;
+};
+
 class Config {
 public:
-    Config(int argc, char** argv) { (void) argc; (void) argv; }
+    void Initialize(int argc, char** argv) { (void) argc; (void) argv; }
+
+    Color       BorderColor = { 128, 255, 128 };
+    TBorderSize BorderSize = { 30, 30 };
 };
+
+extern Config config;
 
 #endif
 

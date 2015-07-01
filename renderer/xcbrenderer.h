@@ -1,8 +1,12 @@
 #ifndef XCBRENDERER_H
 #define XCBREDNERER_H
 
+#include <functional>
+using namespace std;
+
 #include "renderer.h"
 #include "font.h"
+#include "chars.h"
 
 class XcbRenderer : public Renderer {
 public:
@@ -15,9 +19,18 @@ public:
     bool Running() const { return active; }
 
 private:
+    void RedrawBorder() const;
+    uint32_t DoWithColor(Color const& c, function<void(uint32_t)> f) const;
+
     Font const& font;
-    bool active = true;
+    mutable bool active = true;
+    int win_w = 800, win_h = 600;
+
+    // xcb data
     struct xcb_connection_t *c;
+    uint32_t window;
+    uint32_t gc = 0;
+    uint32_t colormap = 0;
 
     XcbRenderer(XcbRenderer const&) = delete;
     XcbRenderer(XcbRenderer&&) = delete;

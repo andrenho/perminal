@@ -4,7 +4,8 @@
 # sources
 # 
 
-SRC=main.cc \
+SRC=main.cc 			\
+    emulator/debug.cc		\
     renderer/xcbrenderer.cc
 
 #
@@ -20,6 +21,11 @@ CPPFLAGS += -Iemulator -Iterminal -Irenderer
 
 # default compilation options
 CPPFLAGS += -fdiagnostics-color=auto -pipe -std=c++1y -DVERSION=${VERSION} -DDATADIR=\"../data\" -fPIC -MMD -MP
+
+# add debugging
+ifeq (${DEBUG},1)
+  CPPFLAGS += -g3 -ggdb -DDEBUG
+endif
 
 # add optimization
 ifeq (${OPTIMIZE},1)
