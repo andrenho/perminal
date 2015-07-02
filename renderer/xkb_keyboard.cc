@@ -9,35 +9,75 @@
 #include <xkbcommon/xkbcommon-compose.h>
 
 #include "debug.h"
-#include "xkb.h"
+#include "renderer.h"
+#include <xkb.h>  // renderer/system/xkb.h
 
 XkbKeyboard::XkbKeyboard(struct xcb_connection_t *c)
 {
-    // TODO - initialize keyboard configuration
-    // http://xkbcommon.org/doc/current/md_doc_quick-guide.html
-    // https://github.com/xkbcommon/libxkbcommon/blob/master/test/interactive-x11.c
-    // Compose: https://github.com/xkbcommon/libxkbcommon/commit/5cefa5c5d09a89c902967c2ec5d4dcb3a6592781
+    // Some links:
+    //   http://xkbcommon.org/doc/current/md_doc_quick-guide.html
+    //   https://github.com/xkbcommon/libxkbcommon/blob/master/test/interactive-x11.c
+    //   Compose: https://github.com/xkbcommon/libxkbcommon/commit/5cefa5c5d09a89c902967c2ec5d4dcb3a6592781
 
     int ret = xkb_x11_setup_xkb_extension(c,
                                       XKB_X11_MIN_MAJOR_XKB_VERSION,
                                       XKB_X11_MIN_MINOR_XKB_VERSION,
                                       XKB_X11_SETUP_XKB_EXTENSION_NO_FLAGS,
-                                      NULL, NULL, &first_xkb_event, NULL);
+                                      nullptr, nullptr, &first_xkb_event, nullptr);
     assert(ret);
 
-    struct xkb_context* ctx;
     ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-    assert(ctx);
+    if(!ctx) {
+        throw RendererInitException("Could not initialize xkb context.");
+    }
 
-    int32_t device_id = xkb_x11_get_core_keyboard_device_id(c);
-    assert(device_id != -1);
-    struct xkb_keymap* keymap = xkb_x11_keymap_new_from_device(ctx, c, device_id, XKB_KEYMAP_COMPILE_NO_FLAGS);
-    assert(keymap);
+    device_id = xkb_x11_get_core_keyboard_device_id(c);
+    if(device_id == -1) {
+        throw RendererInitException("Could not find xkb keyboard device.");
+    }
     
-
+    xkb_keymap* keymap = xkb_x11_keymap_new_from_device(ctx, c, device_id, XKB_KEYMAP_COMPILE_NO_FLAGS);
+    if(!keymap) {
+        throw RendererInitException("Could not initialize xkb keymap.");
+    }
+    
     state = xkb_x11_state_new_from_device(keymap, c, device_id);
-    assert(state);
+    if(!state) {
+        throw RendererInitException("Could not initialize xkb state.");
+    }
 
+    D("Xkb initialized.");
+
+    const char *locale = setlocale(LC_CTYPE, nullptr);  // TODO
+    D("Using locale: %s", locale);
+    
+    struct xkb_compose_table *compose_table = xkb_compose_table_new_from_locale(ctx, locale, XKB_COMPOSE_COMPILE_NO_FLAGS);
+    if(!compose_table) {
+        throw RendererInitException("Could not initialize xkb compose table.");
+    }
+
+    compose_state = xkb_compose_state_new(compose_table, XKB_COMPOSE_STATE_NO_FLAGS);
+    if(!compose_state) {
+        throw RendererInitException("Could not initialize xkb compose state.");
+    }
+
+    this->SetupEventsFilter(c);
+}
+
+
+XkbKeyboard::~XkbKeyboard()
+{
+    xkb_compose_table_unref(compose_table);
+    xkb_compose_state_unref(compose_state);
+    xkb_state_unref(state);
+    xkb_keymap_unref(keymap);
+    xkb_context_unref(ctx);
+}
+
+
+void 
+XkbKeyboard::SetupEventsFilter(struct xcb_connection_t *c)
+{
     enum {
         required_events =
             (XCB_XKB_EVENT_TYPE_NEW_KEYBOARD_NOTIFY |
@@ -70,9 +110,27 @@ XkbKeyboard::XkbKeyboard(struct xcb_connection_t *c)
         .newKeyboardDetails = required_nkn_details,
         .affectState = required_state_details,
         .stateDetails = required_state_details,
+        .affectCtrls = 0,
+        .ctrlDetails = 0,
+        .affectIndicatorState = 0,
+        .indicatorStateDetails = 0,
+        .affectIndicatorMap = 0,
+        .indicatorMapDetails = 0,
+        .affectNames = 0,
+        .namesDetails = 0,
+        .affectCompat = 0,
+        .compatDetails = 0,
+        .affectBell = 0,
+        .bellDetails = 0,
+        .affectMsgDetails = 0,
+        .msgDetails = 0,
+        .affectAccessX = 0,
+        .accessXDetails = 0,
+        .affectExtDev = 0,
+        .extdevDetails = 0,
     };
 
-    xcb_void_cookie_t cookie =
+    /* xcb_void_cookie_t cookie = */
         xcb_xkb_select_events_aux_checked(c,
                                           device_id,
                                           required_events,    /* affectWhich */
@@ -81,16 +139,6 @@ XkbKeyboard::XkbKeyboard(struct xcb_connection_t *c)
                                           required_map_parts, /* affectMap */
                                           required_map_parts, /* map */
                                           &details);          /* details */
-    const char *locale = setlocale(LC_CTYPE, NULL);
-    D("Keyboard locale: %s", locale);
-    struct xkb_compose_table *compose_table = xkb_compose_table_new_from_locale(ctx, locale, XKB_COMPOSE_COMPILE_NO_FLAGS);
-    assert(compose_table);
-    compose_state = xkb_compose_state_new(compose_table, XKB_COMPOSE_STATE_NO_FLAGS);
-}
-
-
-XkbKeyboard::~XkbKeyboard()
-{
 }
 
 
@@ -159,12 +207,11 @@ XkbKeyboard::ParseGenericEvent(xcb_generic_event_t* ev) const
         xcb_xkb_new_keyboard_notify_event_t new_keyboard_notify;
         xcb_xkb_map_notify_event_t map_notify;
         xcb_xkb_state_notify_event_t state_notify;
-    } *event = (union xkb_event *) ev;
+    } *event = reinterpret_cast<union xkb_event *>(ev);
 
-    /*
-    if (event->any.deviceID != device_id)
+    if (event->any.deviceID != device_id) {
         return;
-    */
+    }
     
     switch(event->any.xkbType) {
     case XCB_XKB_STATE_NOTIFY:

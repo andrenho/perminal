@@ -12,7 +12,7 @@ XcbRenderer::XcbRenderer(Font const& font)
 {
     // check open connection
     if(!c) {
-        throw "could not connect to a X server";
+        throw RendererInitException("could not connect to a X server");
     }
     D("Connected to a X server.");
 

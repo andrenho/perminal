@@ -13,11 +13,15 @@ public:
     void ParseGenericEvent(xcb_generic_event_t* ev) const;
 
 private:
-    struct xcb_connection_t *c;
+    void SetupEventsFilter(struct xcb_connection_t *c);
 
-    struct xkb_state* state;
-    uint8_t first_xkb_event;
-    struct xkb_compose_state *compose_state;
+    struct xkb_context* ctx = nullptr;
+    struct xkb_state* state = nullptr;
+    struct xkb_keymap* keymap = nullptr;
+    uint8_t first_xkb_event = 0;
+    int32_t device_id = 0;
+    struct xkb_compose_state *compose_state = nullptr;
+    struct xkb_compose_table *compose_table = nullptr;
 
     XkbKeyboard(XkbKeyboard const&) = delete;
     XkbKeyboard(XkbKeyboard&&) = delete;
