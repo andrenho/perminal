@@ -11,10 +11,14 @@ using namespace std;
 
 class Renderer {
 public:
+    Renderer(Matrix const& matrix) : matrix(matrix) {}
     virtual ~Renderer() {}
     virtual bool Running() const = 0;
     virtual UserEvent GetEvent() const = 0;
-    virtual void Update(Matrix const& matrix) const = 0;
+    virtual void Update() const = 0;
+
+protected:
+    Matrix const& matrix;
 };
 
 //

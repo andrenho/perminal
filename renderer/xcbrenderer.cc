@@ -7,8 +7,9 @@
 #include "config.h"
 #include "debug.h"
 
-XcbRenderer::XcbRenderer(Font const& font) 
-    : c(xcb_connect(nullptr, nullptr)), window(xcb_generate_id(c)), font(font), keyboard(c)
+XcbRenderer::XcbRenderer(Matrix const& matrix, Font const& font) 
+    : Renderer(matrix), c(xcb_connect(nullptr, nullptr)), window(xcb_generate_id(c)), 
+      font(font), keyboard(c), win_w(matrix.Width() * font.CharWidth()), win_h(matrix.Height() * font.CharHeight())
 {
     // check open connection
     if(!c) {
@@ -45,15 +46,16 @@ XcbRenderer::XcbRenderer(Font const& font)
 
     // create window
     xcb_create_window(c, 
-            XCB_COPY_FROM_PARENT,           // depth
-            window,                         // id
-            screen->root,                   // parent
-            0, 0,                           // position
-            win_w, win_h,                   // dimenstions
-            0,                              // border width
-            XCB_WINDOW_CLASS_INPUT_OUTPUT,  // class
-            screen->root_visual,            // visual
-            mask, values);                  // masks
+            XCB_COPY_FROM_PARENT,                       // depth
+            window,                                     // id
+            screen->root,                               // parent
+            0, 0,                                       // position
+            win_w + (config.BorderSize.LeftRight * 2),  // window width
+            win_h + (config.BorderSize.TopBottom * 2),  // window height
+            0,                                          // border width
+            XCB_WINDOW_CLASS_INPUT_OUTPUT,              // class
+            screen->root_visual,                        // visual
+            mask, values);                              // masks
     xcb_map_window(c, window);
     xcb_flush(c);
     D("Window created.");
@@ -72,22 +74,45 @@ XcbRenderer::~XcbRenderer()
 }
 
 
+void 
+XcbRenderer::Update() const 
+{ 
+    for(auto const& p: matrix.Dirty()) {
+        auto cell = matrix.Cells(p.x, p.y);
+        DrawChar(p.x, p.y, cell.c, cell.attr);
+    }
+    xcb_flush(c);
+}
+
+
 UserEvent 
 XcbRenderer::GetEvent() const 
 { 
     xcb_generic_event_t* e = xcb_wait_for_event(c);
     switch(e->response_type & ~0x80) {
-    case XCB_EXPOSE:
-        D("Expose event detected.");
+    case XCB_EXPOSE: {
+        xcb_expose_event_t *ex = (xcb_expose_event_t *)e;
+        D("Expose event detected (%d %d %d %d) count %d", ex->x, ex->y, ex->width, ex->height, ex->count);
         RedrawBorder();
-        // TODO - draw chars?
+        int x1 = ex->x / font.CharWidth(),
+            y1 = ex->y / font.CharHeight(),
+            x2 = (ex->x + ex->width - (2*config.BorderSize.LeftRight)) / font.CharWidth(),
+            y2 = (ex->y + ex->height - (2*config.BorderSize.TopBottom)) / font.CharHeight();
+        D("   Char exposed: (%d,%d) - (%d %d)", x1, y1, x2, y2);
+        for(int x=max(x1, 0); x<min(x2, matrix.Width()); ++x) {
+            for(int y=max(y1, 0); y<min(y2, matrix.Height()); ++y) {
+                auto cell = matrix.Cells(x, y);
+                DrawChar(x, y, cell.c, cell.attr);
+            }
+        }
         xcb_flush(c);
         break;
+    }
     case XCB_KEY_PRESS: {
             char chr[5] = { 0, 0, 0, 0, 0 };
             keyboard.ParseKeyPress(reinterpret_cast<xcb_key_press_event_t*>(e), chr);
-        }
         break;
+    }
     case XCB_DESTROY_NOTIFY:
         D("Quit event detected.");
         active = false;
@@ -100,18 +125,6 @@ XcbRenderer::GetEvent() const
     return { { NOTHING } }; 
 }
     
-
-void 
-XcbRenderer::Update(Matrix const& matrix) const 
-{ 
-    for(auto const& p: matrix.Dirty()) {
-        auto cell = matrix.Cells(p.x, p.y);
-        DrawChar(p.x, p.y, cell.c, cell.attr);
-    }
-
-    // xcb_flush(c);
-}
-
 
 void 
 XcbRenderer::DrawChar(int x, int y, const char ch[4], Attributes const& attr) const
@@ -128,10 +141,10 @@ void
 XcbRenderer::RedrawBorder() const
 {
     xcb_rectangle_t rs[] = { 
-        { 0, 0, config.BorderSize.LeftRight, win_h }, 
-        { win_w-config.BorderSize.LeftRight, 0, config.BorderSize.LeftRight, win_h }, 
-        { 0, 0, win_w, config.BorderSize.TopBottom },
-        { 0, win_h-config.BorderSize.TopBottom, win_w, config.BorderSize.TopBottom },
+        { 0, 0, config.BorderSize.LeftRight, win_h+config.BorderSize.TopBottom }, 
+        { win_w+config.BorderSize.LeftRight, 0, config.BorderSize.LeftRight, (win_h+2*config.BorderSize.TopBottom) }, 
+        { 0, 0, (win_w+config.BorderSize.LeftRight), config.BorderSize.TopBottom },
+        { 0, win_h+config.BorderSize.TopBottom, (win_w+config.BorderSize.LeftRight), config.BorderSize.TopBottom },
     };
 
     SetGCForeground(config.BorderColor);

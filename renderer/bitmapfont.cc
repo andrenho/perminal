@@ -1,24 +1,26 @@
 #include "bitmapfont.h"
 
 #include <cassert>
+#include <cstring>
 
 #include "config.h"
 #include "debug.h"
 
-BitmapFont::BitmapFont(int char_width, int char_height, int image_width, int image_height)
+BitmapFont::BitmapFont(int char_width, int char_height, int image_width, int image_height, string const& encoding)
     : Font(char_width, char_height, image_width, image_height)
 {
+    cd = iconv_open(encoding.c_str(), "UTF-8");   // TODO - unload
 }
 
 
 BitmapFont 
-BitmapFont::FromXBM(int w, int h, unsigned char* data)
+BitmapFont::FromXBM(int w, int h, unsigned char* data, string const& encoding)
 {
     D("Loading XBM image...");
 
     int c = 0;
 
-    BitmapFont f(w/16, h/16, w, h);
+    BitmapFont f(w/16, h/16, w, h, encoding);
     f.data.reserve(w * h);
     uint8_t bg = data[0] & 1;
     for(int y=0; y<h; ++y) {
@@ -41,7 +43,15 @@ BitmapFont::FromXBM(int w, int h, unsigned char* data)
 CharImage 
 BitmapFont::LoadChar(const char chr[4], Attributes const& attr) const
 {
-    uint8_t c = (chr[1] > 0) ? config.Invalid8bitChar : chr[0];   // TODO
+    // convert char
+    // uint8_t c = (chr[1] > 0) ? config.Invalid8bitChar : chr[0];   // TODO
+    size_t in_left = strlen(chr)+1, out_left = 2;
+    char* cbuf = static_cast<char*>(calloc(2, 1));
+    iconv(cd, const_cast<char**>(&chr), &in_left, &cbuf, &out_left);
+    char c = cbuf[0];
+    free(cbuf);
+    D("%c %d", c, c);
+
     int x_in_image = (c % 16) * char_width,
         y_in_image = (c / 16) * char_height;
 

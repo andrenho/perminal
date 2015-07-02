@@ -12,7 +12,7 @@ struct P {
     int x, y;
 
     inline bool operator<(P const& other) const {
-        return ((x<<16) + y) < ((other.x<<16) + y);
+        return ((x<<16) + y) < ((other.x<<16) + other.y);
     }
 };
 

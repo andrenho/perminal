@@ -10,14 +10,14 @@ using namespace std;
 
 class Terminal {
 public:
-    Terminal() : matrix(80, 25) {}
+    Terminal(Matrix const& matrix) : matrix(matrix) {}
 
     bool Alive() const { return true; }
     vector<uint8_t> ParseEvent(UserEvent const& event) const { (void) event; return {}; }
-    Matrix const& ParseData(vector<uint8_t> const& data) const { (void) data; return matrix; }
+    void ParseData(vector<uint8_t> const& data) const { (void) data; }
 
 private:
-    Matrix matrix;
+    Matrix const& matrix;
 };
 
 #endif

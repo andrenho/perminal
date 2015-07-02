@@ -6,13 +6,15 @@ Matrix::Matrix(int w, int h)
     for(int x=0; x<w; ++x) {
         for(int y=0; y<h; ++y) {
             cells[P{x,y}] = { { ' ', 0, 0, 0 }, DEFAULT_ATTR };
+            dirty.push_back(P{x,y});
         }
     }
     PrintChar("A");
     PrintChar("n");
     PrintChar("d");
     PrintChar("r");
-    PrintChar("é");
+    char s[] { 0xe0, 0x09, 0x0 };
+    PrintChar(s);
 }
 
 

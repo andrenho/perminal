@@ -14,11 +14,11 @@ using namespace std;
 
 class XcbRenderer : public Renderer {
 public:
-    explicit XcbRenderer(Font const& font);
+    XcbRenderer(Matrix const& matrix, Font const& font);
     ~XcbRenderer();
 
     UserEvent GetEvent() const;
-    void Update(Matrix const& matrix) const;
+    void Update() const;
 
     bool Running() const { return active; }
 
@@ -47,7 +47,7 @@ private:
     // class data
     Font const& font;
     mutable bool active = true;
-    uint16_t win_w = 800, win_h = 600;
+    uint16_t win_w, win_h;
     XkbKeyboard keyboard;
 
     XcbRenderer(XcbRenderer const&) = delete;

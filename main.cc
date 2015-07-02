@@ -32,10 +32,11 @@ int main(int argc, char** argv)
     try {
 
         const PTY plugin;
-        const Terminal terminal;
+        const Matrix matrix(80, 25);
+        const Terminal terminal(matrix);
 
-        const BitmapFont font = BitmapFont::FromXBM(Vintl01_width, Vintl01_height, Vintl01_bits);
-        const XcbRenderer renderer(font);
+        const BitmapFont font = BitmapFont::FromXBM(Vintl01_width, Vintl01_height, Vintl01_bits, "ISO_8859-1");
+        const XcbRenderer renderer(matrix, font);
 
         // get user input
         thread t_output([&terminal, &renderer, &plugin] {
@@ -48,8 +49,8 @@ int main(int argc, char** argv)
         // output to user
         while(terminal.Alive() && renderer.Running()) {
             vector<uint8_t> data = plugin.Read();
-            auto const& matrix = terminal.ParseData(data);
-            renderer.Update(matrix);
+            terminal.ParseData(data);
+            renderer.Update();
         }
 
         t_output.join();

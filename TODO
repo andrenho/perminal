@@ -1,7 +1,9 @@
-- attributes
-- Matrix
+- attributes (ok)
+- Matrix (ok)
    + cursor
+- encodings in bitmap font
 - Terminal/PTY
+   + matrix PTY commands
 - my tic
 - xterm-256color
 - config file
