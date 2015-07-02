@@ -36,7 +36,7 @@ XkbKeyboard::XkbKeyboard(struct xcb_connection_t *c)
         throw RendererInitException("Could not find xkb keyboard device.");
     }
     
-    xkb_keymap* keymap = xkb_x11_keymap_new_from_device(ctx, c, device_id, XKB_KEYMAP_COMPILE_NO_FLAGS);
+    keymap = xkb_x11_keymap_new_from_device(ctx, c, device_id, XKB_KEYMAP_COMPILE_NO_FLAGS);
     if(!keymap) {
         throw RendererInitException("Could not initialize xkb keymap.");
     }
@@ -51,7 +51,7 @@ XkbKeyboard::XkbKeyboard(struct xcb_connection_t *c)
     const char *locale = setlocale(LC_CTYPE, nullptr);  // TODO
     D("Using locale: %s", locale);
     
-    struct xkb_compose_table *compose_table = xkb_compose_table_new_from_locale(ctx, locale, XKB_COMPOSE_COMPILE_NO_FLAGS);
+    compose_table = xkb_compose_table_new_from_locale(ctx, locale, XKB_COMPOSE_COMPILE_NO_FLAGS);
     if(!compose_table) {
         throw RendererInitException("Could not initialize xkb compose table.");
     }

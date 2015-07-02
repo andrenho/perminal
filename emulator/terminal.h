@@ -10,7 +10,7 @@ using namespace std;
 
 class Terminal {
 public:
-    Terminal() : matrix() {}
+    Terminal() : matrix(80, 25) {}
 
     bool Alive() const { return true; }
     vector<uint8_t> ParseEvent(UserEvent const& event) const { (void) event; return {}; }

@@ -24,10 +24,10 @@ public:
 
 private:
     void RedrawBorder() const;
-    void DrawChar(int x, int y, char32_t c, Attributes const& attr) const;
+    void DrawChar(int x, int y, const char c[4], Attributes const& attr) const;
 
     uint32_t GetColor(Color const& color) const;
-    uint32_t GetCharPixmap(char32_t c, Attributes const& attr) const;
+    uint32_t GetCharPixmap(const char c[4], Attributes const& attr) const;
     void SetGCForeground(Color const& color) const;
 
     // color memoization

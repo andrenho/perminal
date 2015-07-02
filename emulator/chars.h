@@ -44,11 +44,11 @@ static_assert(std::is_pod<Attributes>::value, "Attributes must be a POD");
 
 
 struct Cell {
-    char32_t c;
+    char c[4];
     Attributes attr;
 
     inline uint64_t hash() const {
-        return c + (attr.hash() << 32);
+        return c[0] + (c[1] << 8) + (c[2] << 16) + (c[3] << 24) + (attr.hash() << 32);
     }
 
     inline bool operator<(Cell const& other) const {

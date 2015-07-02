@@ -39,8 +39,9 @@ BitmapFont::FromXBM(int w, int h, unsigned char* data)
 
 
 CharImage 
-BitmapFont::LoadChar(char32_t c, Attributes const& attr) const
+BitmapFont::LoadChar(const char chr[4], Attributes const& attr) const
 {
+    uint8_t c = (chr[1] > 0) ? config.Invalid8bitChar : chr[0];   // TODO
     int x_in_image = (c % 16) * char_width,
         y_in_image = (c / 16) * char_height;
 

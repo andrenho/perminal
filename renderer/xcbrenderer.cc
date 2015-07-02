@@ -104,14 +104,17 @@ XcbRenderer::GetEvent() const
 void 
 XcbRenderer::Update(Matrix const& matrix) const 
 { 
-    (void) matrix;
+    for(auto const& p: matrix.Dirty()) {
+        auto cell = matrix.Cells(p.x, p.y);
+        DrawChar(p.x, p.y, cell.c, cell.attr);
+    }
 
     // xcb_flush(c);
 }
 
 
 void 
-XcbRenderer::DrawChar(int x, int y, char32_t ch, Attributes const& attr) const
+XcbRenderer::DrawChar(int x, int y, const char ch[4], Attributes const& attr) const
 {
     x = config.BorderSize.LeftRight + (x * font.CharWidth());
     y = config.BorderSize.TopBottom + (y * font.CharHeight());
@@ -137,9 +140,9 @@ XcbRenderer::RedrawBorder() const
 
 
 uint32_t 
-XcbRenderer::GetCharPixmap(char32_t ch, Attributes const& attr) const
+XcbRenderer::GetCharPixmap(const char ch[4], Attributes const& attr) const
 {
-    Cell cell{ ch, attr };
+    Cell cell{ { ch[0], ch[1], ch[2], ch[3] }, attr };
     auto ci = ch_pixmaps.find(cell);
     if(ci == ch_pixmaps.end()) {
 
@@ -181,7 +184,7 @@ XcbRenderer::GetCharPixmap(char32_t ch, Attributes const& attr) const
          * needed (for example, when the user changes the font) to call
          * xcb_free_pixmap for the pixmaps stored. */
 
-        D("Created char for '%c' (0x%x).", ch, ch);
+        D("Created char for '%s' (0x%x).", ch, ch[0] + (ch[1] << 8) + (ch[2] << 16) + (ch[3] << 24));
         return px;
     } else {
         return ci->second;
@@ -200,7 +203,7 @@ XcbRenderer::GetColor(Color const& color) const
                 nullptr);
         colors[color] = unique_ptr<struct xcb_alloc_color_reply_t,
             function<void(xcb_alloc_color_reply_t*)>>(rep, [](xcb_alloc_color_reply_t* r) {
-                D("Color #%02X%02X%02X deallocated.", (r->red/100), (r->green/100), (r->blue/100));
+                D("Color #%02X%02X%02X deallocated.", (r->red/0x100), (r->green/0x100), (r->blue/0x100));
                 free(r);
             });
         D("Color #%02X%02X%02X allocated.", color.r, color.g, color.b);
