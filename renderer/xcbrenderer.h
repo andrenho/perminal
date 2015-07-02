@@ -47,6 +47,8 @@ private:
     uint32_t gc = 0;
     uint32_t colormap = 0;
     uint8_t  depth = 0;
+    struct xkb_state* state;
+    struct xkb_compose_state *compose_state;
 
     XcbRenderer(XcbRenderer const&) = delete;
     XcbRenderer(XcbRenderer&&) = delete;

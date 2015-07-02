@@ -3,6 +3,7 @@
 #include <xcb/xcb.h>
 #include <xkbcommon/xkbcommon.h>
 #include <xkbcommon/xkbcommon-x11.h>
+#include <xkbcommon/xkbcommon-compose.h>
 
 #include <cassert>
 
@@ -69,6 +70,16 @@ XcbRenderer::XcbRenderer(Font const& font)
     // TODO - initialize keyboard configuration
     // http://xkbcommon.org/doc/current/md_doc_quick-guide.html
     // https://github.com/xkbcommon/libxkbcommon/blob/master/test/interactive-x11.c
+    // Compose: https://github.com/xkbcommon/libxkbcommon/commit/5cefa5c5d09a89c902967c2ec5d4dcb3a6592781
+
+    uint8_t first_xkb_event;
+    int ret = xkb_x11_setup_xkb_extension(c,
+                                      XKB_X11_MIN_MAJOR_XKB_VERSION,
+                                      XKB_X11_MIN_MINOR_XKB_VERSION,
+                                      XKB_X11_SETUP_XKB_EXTENSION_NO_FLAGS,
+                                      NULL, NULL, &first_xkb_event, NULL);
+    assert(ret);
+
     struct xkb_context* ctx;
     ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     assert(ctx);
@@ -77,6 +88,14 @@ XcbRenderer::XcbRenderer(Font const& font)
     assert(device_id != -1);
     struct xkb_keymap* keymap = xkb_x11_keymap_new_from_device(ctx, c, device_id, XKB_KEYMAP_COMPILE_NO_FLAGS);
     assert(keymap);
+
+    state = xkb_x11_state_new_from_device(keymap, c, device_id);
+    assert(state);
+
+    const char *locale = /*"pt_BR"; */ setlocale(LC_CTYPE, NULL);
+    struct xkb_compose_table *compose_table = xkb_compose_table_new_from_locale(ctx, locale, XKB_COMPOSE_COMPILE_NO_FLAGS);
+    assert(compose_table);
+    compose_state = xkb_compose_state_new(compose_table, XKB_COMPOSE_STATE_NO_FLAGS);
 }
 
 
@@ -102,6 +121,22 @@ XcbRenderer::GetEvents() const
     case XCB_KEY_PRESS: {
             xcb_key_press_event_t* ev = reinterpret_cast<xcb_key_press_event_t*>(e);
             D("%d %d %d", ev->detail, ev->sequence, ev->state);
+            xkb_keysym_t keysym = xkb_state_key_get_one_sym(state, ev->detail);
+            D("%d", keysym);
+            char keysym_name[64];
+            xkb_keysym_get_name(keysym, keysym_name, sizeof(keysym_name));
+            D("%s", keysym_name);
+
+            char *buffer;
+            int size = xkb_state_key_get_utf8(state, ev->detail, NULL, 0) + 1;
+            buffer = (char*)calloc(size, 1);
+            xkb_state_key_get_utf8(state, ev->detail, buffer, size);
+            printf("%s\n", buffer);
+            free(buffer);
+
+            enum xkb_compose_status status = XKB_COMPOSE_NOTHING;
+            status = xkb_compose_state_get_status(compose_state);
+            D("%d", status);
         }
         break;
     case XCB_DESTROY_NOTIFY:
