@@ -49,11 +49,11 @@ ifeq (${WARNINGS},1)
       -Wunused-parameter -Wunused-value  -Wunused-variable  -Wvariadic-macros \
       -Wvolatile-register-var  -Wwrite-strings -Wfatal-errors -Winvalid-pch -Weffc++ \
       -Wold-style-cast -Wsign-promo -Winline -Wswitch-enum -Wmissing-declarations -Wfatal-errors
-  CXXFLAGS += -Wno-narrowing
   ifeq (${CXX},g++)
     CXXFLAGS += -Wunsafe-loop-optimizations -Wzero-as-null-pointer-constant -Wuseless-cast
   endif
 endif
+CXXFLAGS += -Wno-narrowing
 
 # debug Makefile
 Q := @
@@ -139,6 +139,9 @@ ifneq (${DEBUG_MAKE},1)
 endif
 	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes \
 	  $(addprefix --suppressions=util/,${SUPPRESSIONS}) ./perminal
+
+countlines:
+	@cloc --exclude_dir=system,.rust,docs --force-lang="C++",h .
 
 lint: 
 	cpplint --filter=${LINT_FILTERS} --linelength=120 **/*.cc **/*.h

@@ -1,5 +1,5 @@
 #ifndef XCBRENDERER_H
-#define XCBREDNERER_H
+#define XCBRENDERER_H
 
 #include <functional>
 #include <map>

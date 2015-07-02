@@ -18,7 +18,7 @@ XcbRenderer::XcbRenderer(Font const& font)
 
     // get screen information
     int screen_nbr;
-    xcb_screen_t* screen;
+    xcb_screen_t* screen = nullptr;
     xcb_screen_iterator_t iter = xcb_setup_roots_iterator(xcb_get_setup(c));
     for(; iter.rem; --screen_nbr, xcb_screen_next(&iter)) {
         screen = iter.data;

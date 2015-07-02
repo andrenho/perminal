@@ -8,6 +8,8 @@ using namespace std;
 
 class PTY : public Plugin {
 public:
+    PTY() {}
+
     void Write(vector<uint8_t> const& data) const { (void) data; }
     vector<uint8_t> Read() const { return {}; }
 };

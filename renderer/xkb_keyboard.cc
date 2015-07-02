@@ -154,6 +154,7 @@ XkbKeyboard::ParseKeyPress(xcb_key_press_event_t* ev) const {
             default:                    return "???";
         }
     };
+    (void) compose_status;
 
     D("Key pressed:");
     D("   previous compose status: %s", compose_status());
@@ -173,12 +174,12 @@ XkbKeyboard::ParseKeyPress(xcb_key_press_event_t* ev) const {
     char buffer[5];
     if(status == XKB_COMPOSE_COMPOSED) {
         keysym = xkb_compose_state_get_one_sym(compose_state);
-        int n = xkb_compose_state_get_utf8(compose_state, buffer, 5);
+        int n = xkb_compose_state_get_utf8(compose_state, buffer, 5); (void) n;
         D("   compose key pressed:     '%s' (%d utf-8 bytes)", buffer, n);
 
         // TODO - return key
     } else {
-        int n = xkb_state_key_get_utf8(state, ev->detail, buffer, 5);
+        int n = xkb_state_key_get_utf8(state, ev->detail, buffer, 5); (void) n;
 
         if(buffer[0] >= 32) {
             D("   regular key pressed:     '%s' (%d utf-8 bytes)", buffer, n);

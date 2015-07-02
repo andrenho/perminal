@@ -2,6 +2,10 @@
 #define USEREVENT_H
 
 struct UserEvent {
+    enum { NOTHING, KEYPRESS } type;
+    union {
+        uint8_t chr[4];
+    };
 };
 
 #endif

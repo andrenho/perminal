@@ -21,7 +21,7 @@ Font::LoadChar(char32_t c, Attributes const& attr) const
         }
     }
     ASSERT(static_cast<int>(ch.data.size()) == (char_width*char_height), 
-            "ch.data.size was expected to be %d, but is %ld", (char_width*char_height), ch.data.size());
+            "ch.data.size was expected to be %d, but is %zu", (char_width*char_height), ch.data.size());
     return ch;
 }
 
