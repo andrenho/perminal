@@ -68,6 +68,7 @@ XcbRenderer::XcbRenderer(Font const& font)
 
     // TODO - initialize keyboard configuration
     // http://xkbcommon.org/doc/current/md_doc_quick-guide.html
+    // https://github.com/xkbcommon/libxkbcommon/blob/master/test/interactive-x11.c
     struct xkb_context* ctx;
     ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     assert(ctx);
