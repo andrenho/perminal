@@ -40,11 +40,8 @@ int main(int argc, char** argv)
         // get user input
         thread t_output([&terminal, &renderer, &plugin] {
             while(terminal.Alive() && renderer.Running()) {
-                vector<UserEvent> events = renderer.GetEvents();
-                for(auto const& event: events) {
-                    vector<uint8_t> data = terminal.ParseEvent(event);
-                    plugin.Write(data);
-                }
+                vector<uint8_t> data = terminal.ParseEvent(renderer.GetEvent());
+                plugin.Write(data);
             }
         });
 

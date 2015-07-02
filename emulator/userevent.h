@@ -1,11 +1,15 @@
 #ifndef USEREVENT_H
 #define USEREVENT_H
 
+enum UserEventType { NOTHING, KEYPRESS }; 
+
 struct UserEvent {
-    enum { NOTHING, KEYPRESS } type;
+    UserEventType type;
     union {
-        uint8_t chr[4];
+        uint8_t chr[5] = { 0, 0, 0, 0, 0 };
     };
+
+    UserEvent(UserEventType type) : type(type) {}
 };
 
 #endif

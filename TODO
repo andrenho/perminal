@@ -1,0 +1,16 @@
+- attributes
+- Matrix
+   + cursor
+- Terminal/PTY
+- my tic
+- xterm-256color
+- config file
+- check libraries in Makefile
+
+- mouse support
+- color support
+- x11 font support
+- fontconfig
+
+Future options:
+  - show partial COMPOSING accent

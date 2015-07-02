@@ -13,7 +13,7 @@ class Renderer {
 public:
     virtual ~Renderer() {}
     virtual bool Running() const = 0;
-    virtual vector<UserEvent> GetEvents() const = 0;
+    virtual UserEvent GetEvent() const = 0;
     virtual void Update(Matrix const& matrix) const = 0;
 };
 

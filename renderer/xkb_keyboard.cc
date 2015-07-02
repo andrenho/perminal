@@ -143,7 +143,7 @@ XkbKeyboard::SetupEventsFilter(struct xcb_connection_t *c)
 
 
 void 
-XkbKeyboard::ParseKeyPress(xcb_key_press_event_t* ev) const {
+XkbKeyboard::ParseKeyPress(xcb_key_press_event_t* ev, char chr[5]) const {
     // debugging info
     auto compose_status = [&](){
         switch(xkb_compose_state_get_status(compose_state)) {
@@ -171,22 +171,22 @@ XkbKeyboard::ParseKeyPress(xcb_key_press_event_t* ev) const {
     xkb_compose_state_feed(compose_state, keysym);
     auto status = xkb_compose_state_get_status(compose_state);
 
-    char buffer[5];
     if(status == XKB_COMPOSE_COMPOSED) {
         keysym = xkb_compose_state_get_one_sym(compose_state);
-        int n = xkb_compose_state_get_utf8(compose_state, buffer, 5); (void) n;
-        D("   compose key pressed:     '%s' (%d utf-8 bytes)", buffer, n);
-
-        // TODO - return key
+        int n = xkb_compose_state_get_utf8(compose_state, chr, 5); (void) n;
+        D("   compose key pressed:     '%s' (%d utf-8 bytes)", chr, n);
     } else {
-        int n = xkb_state_key_get_utf8(state, ev->detail, buffer, 5); (void) n;
+        int n = xkb_state_key_get_utf8(state, ev->detail, chr, 5); (void) n;
 
-        if(buffer[0] >= 32) {
-            D("   regular key pressed:     '%s' (%d utf-8 bytes)", buffer, n);
+        if(chr[0] >= 32) {
+            D("   regular key pressed:     '%s' (%d utf-8 bytes)", chr, n);
         } else {
-            D("   regular key pressed:     0x%02X", buffer[0]);
+            D("   regular key pressed:     0x%02X", chr[0]);
         }
-        // TODO - return key
+
+        if(status != XKB_COMPOSE_NOTHING) {
+            chr[0] = 0;  // don't return anything when COMPOSING or CANCELLED
+        }
     }
 
     D("   new compose status:      %s", compose_status());

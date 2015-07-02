@@ -14,8 +14,14 @@ class Config {
 public:
     void Initialize(int argc, char** argv) { (void) argc; (void) argv; }
 
+    // border
     Color       BorderColor = { 128, 255, 128 };
     TBorderSize BorderSize = { 30, 30 };
+
+    // font
+    double DimPercentage = 0.5;
+    int UnderlineY = 2;
+    int UnderlineIntensity = 255;
 };
 
 extern Config config;

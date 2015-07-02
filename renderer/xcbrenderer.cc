@@ -72,21 +72,20 @@ XcbRenderer::~XcbRenderer()
 }
 
 
-vector<UserEvent> 
-XcbRenderer::GetEvents() const 
+UserEvent 
+XcbRenderer::GetEvent() const 
 { 
     xcb_generic_event_t* e = xcb_wait_for_event(c);
     switch(e->response_type & ~0x80) {
     case XCB_EXPOSE:
         D("Expose event detected.");
         RedrawBorder();
-        DrawChar(0, 0, 'A', { { 255, 255, 255 }, { 0, 0, 0 } });
-        DrawChar(1, 0, 'B', { { 255, 255, 255 }, { 0, 0, 0 } });
-        DrawChar(2, 0, 'C', { { 255, 255, 255 }, { 0, 0, 0 } });
+        // TODO - draw chars?
         xcb_flush(c);
         break;
     case XCB_KEY_PRESS: {
-            keyboard.ParseKeyPress(reinterpret_cast<xcb_key_press_event_t*>(e));
+            char chr[5] = { 0, 0, 0, 0, 0 };
+            keyboard.ParseKeyPress(reinterpret_cast<xcb_key_press_event_t*>(e), chr);
         }
         break;
     case XCB_DESTROY_NOTIFY:
@@ -98,7 +97,7 @@ XcbRenderer::GetEvents() const
         break;
     }
     free(e);
-    return {}; 
+    return { { NOTHING } }; 
 }
     
 

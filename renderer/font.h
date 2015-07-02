@@ -17,7 +17,7 @@ struct CharImage {
 class Font {
 public:
     virtual ~Font() {}
-    virtual CharImage LoadChar(char32_t c, Attributes const& attr) const;
+    virtual CharImage LoadChar(char32_t c, Attributes const& attr) const = 0;
 
     int CharWidth() const { return char_width; }
     int CharHeight() const { return char_height; }

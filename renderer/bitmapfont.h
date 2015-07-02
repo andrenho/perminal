@@ -11,9 +11,17 @@ using namespace std;
 class BitmapFont : public Font {
 public:
     static BitmapFont FromXBM(int w, int h, unsigned char* data);
+    CharImage LoadChar(char32_t c, Attributes const& attr) const;
 
 private:
     BitmapFont(int char_width, int char_height, int image_width, int image_height);
+    
+    void ApplyItalic(vector<uint8_t>& px_image) const;
+    void ApplyUnderline(vector<uint8_t>& px_image) const;
+    void ApplyReverse(vector<uint8_t>& px_image) const;
+    void ApplyBold(vector<uint8_t>& px_image) const;
+    void ApplyDim(vector<uint8_t>& px_image) const;
+    void ApplyInvisible(vector<uint8_t>& px_image) const;
 };
 
 #endif

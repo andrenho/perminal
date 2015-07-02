@@ -17,7 +17,7 @@ public:
     explicit XcbRenderer(Font const& font);
     ~XcbRenderer();
 
-    vector<UserEvent> GetEvents() const;
+    UserEvent GetEvent() const;
     void Update(Matrix const& matrix) const;
 
     bool Running() const { return active; }
