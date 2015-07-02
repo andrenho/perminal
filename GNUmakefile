@@ -7,6 +7,7 @@
 SRC=main.cc 			\
     emulator/debug.cc		\
     renderer/xcbrenderer.cc	\
+    renderer/xkb_keyboard.cc	\
     renderer/font.cc		\
     renderer/bitmapfont.cc
 
@@ -15,11 +16,11 @@ SRC=main.cc 			\
 #
 
 # libraries
-CPPFLAGS += `pkg-config --cflags xcb xkbcommon xkbcommon-x11` 
-LDFLAGS += `pkg-config --libs xcb xkbcommon xkbcommon-x11` -lpthread
+CPPFLAGS += `pkg-config --cflags xcb xcb-xkb xkbcommon xkbcommon-x11` 
+LDFLAGS += `pkg-config --libs xcb xcb-xkb xkbcommon xkbcommon-x11` -lpthread
 
 # header directory
-CPPFLAGS += -Iemulator -Iterminal -Irenderer
+CPPFLAGS += -Iemulator -Iterminal -Irenderer -isystem renderer/system
 
 # default compilation options
 CPPFLAGS += -fdiagnostics-color=auto -pipe -std=c++1y -DVERSION=${VERSION} -DDATADIR=\"../data\" -fPIC -MMD -MP

@@ -9,6 +9,7 @@ using namespace std;
 #include "renderer.h"
 #include "font.h"
 #include "chars.h"
+#include "xkb_keyboard.h"
 
 
 class XcbRenderer : public Renderer {
@@ -36,19 +37,18 @@ private:
                > colors = {};
     mutable map<Cell, uint32_t> ch_pixmaps = {};
         
-    // class data
-    Font const& font;
-    mutable bool active = true;
-    uint16_t win_w = 800, win_h = 600;
-
     // xcb data
     struct xcb_connection_t *c;
     uint32_t window;
     uint32_t gc = 0;
     uint32_t colormap = 0;
     uint8_t  depth = 0;
-    struct xkb_state* state;
-    struct xkb_compose_state *compose_state;
+
+    // class data
+    Font const& font;
+    mutable bool active = true;
+    uint16_t win_w = 800, win_h = 600;
+    XkbKeyboard keyboard;
 
     XcbRenderer(XcbRenderer const&) = delete;
     XcbRenderer(XcbRenderer&&) = delete;
