@@ -16,17 +16,24 @@ struct P {
     }
 };
 
+enum ECursorIntensity { INVISIBLE, VISIBLE, VERY_VISIBLE };
+
 class Matrix {
 public:
     Matrix(int w, int h);
 
     void PrintChar(const char c[4]);
 
+    inline void Blink() { blink_on = !blink_on; }
+
+    vector<P> Dirty() const;
+    inline void AddToDirty(P p) const { dirty.push_back(p); }
+
     int Width() const { return w; }
     int Height() const { return h; }
     Cell const& Cells(int x, int y) const { return cells.at(P{ x, y }); }
-    vector<P> Dirty() const;
     P Cursor() const { return cursor; }
+    ECursorIntensity CursorIntensity() const;
 
     Attributes CurrentAttr = DEFAULT_ATTR;
 
@@ -36,6 +43,8 @@ private:
     mutable vector<P> dirty;
 
     P cursor = { 0, 0 };
+    ECursorIntensity cursor_intensity = VISIBLE;
+    bool blink_on = true;
 
     const Attributes DEFAULT_ATTR = { 
         false,false,false,false,false,false,false,false,false,false, config.DefaultBGColor, config.DefaultFGColor,

@@ -50,6 +50,7 @@ private:
     uint16_t win_w, win_h;
     XkbKeyboard keyboard;
 
+    // uncopyable
     XcbRenderer(XcbRenderer const&) = delete;
     XcbRenderer(XcbRenderer&&) = delete;
     XcbRenderer& operator=(XcbRenderer const&) = delete;

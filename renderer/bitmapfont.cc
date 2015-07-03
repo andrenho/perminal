@@ -7,9 +7,8 @@
 #include "debug.h"
 
 BitmapFont::BitmapFont(int char_width, int char_height, int image_width, int image_height, string const& encoding)
-    : Font(char_width, char_height, image_width, image_height)
+    : Font(char_width, char_height, image_width, image_height), ce(CharEncoding("utf-8", encoding))
 {
-    cd = iconv_open(encoding.c_str(), "UTF-8");   // TODO - unload
 }
 
 
@@ -44,13 +43,9 @@ CharImage
 BitmapFont::LoadChar(const char chr[4], Attributes const& attr) const
 {
     // convert char
-    // uint8_t c = (chr[1] > 0) ? config.Invalid8bitChar : chr[0];   // TODO
-    size_t in_left = strlen(chr)+1, out_left = 2;
-    char* cbuf = static_cast<char*>(calloc(2, 1));
-    iconv(cd, const_cast<char**>(&chr), &in_left, &cbuf, &out_left);
-    char c = cbuf[0];
-    free(cbuf);
-    D("%c %d", c, c);
+    char outp[4];
+    ce.Convert(chr, outp);
+    uint8_t c = static_cast<uint8_t>(outp[0]);
 
     int x_in_image = (c % 16) * char_width,
         y_in_image = (c / 16) * char_height;

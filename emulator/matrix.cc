@@ -1,5 +1,7 @@
 #include "matrix.h"
 
+#include "debug.h"
+
 Matrix::Matrix(int w, int h)
     : w(w), h(h), cells(), dirty()
 {
@@ -9,12 +11,6 @@ Matrix::Matrix(int w, int h)
             dirty.push_back(P{x,y});
         }
     }
-    PrintChar("A");
-    PrintChar("n");
-    PrintChar("d");
-    PrintChar("r");
-    char s[] { 0xe0, 0x09, 0x0 };
-    PrintChar(s);
 }
 
 
@@ -24,6 +20,17 @@ Matrix::Dirty() const
     vector<P> cp = dirty;
     dirty.clear();
     return cp;
+}
+
+
+ECursorIntensity 
+Matrix::CursorIntensity() const 
+{ 
+    if(blink_on || !config.BlinkCursor) {
+        return cursor_intensity;
+    } else {
+        return INVISIBLE;
+    }
 }
 
 

@@ -14,13 +14,17 @@ class Config {
 public:
     void Initialize(int argc, char** argv) { (void) argc; (void) argv; }
 
-    // default colors
+    // console
     Color  DefaultBGColor = { 255, 255, 255 };
     Color  DefaultFGColor = { 0, 0, 0 };
+    int    BlinkSpeed = 300;
 
-    // border
-    Color       BorderColor = { 128, 255, 128 };
-    TBorderSize BorderSize  = { 30, 30 };
+    // cursor
+    bool   BlinkCursor = true;
+    char   CursorVisibleChar[4] = { 127, 0, 0, 0 };
+    Color  CursorVisibleColor = { 0, 128, 0 };
+    char   CursorVeryVisibleChar[4] = { 127, 0, 0, 0 };
+    Color  CursorVeryVisibleColor = { 0, 255, 0 };
 
     // font
     double DimPercentage = 0.5;
@@ -28,7 +32,12 @@ public:
     int UnderlineIntensity = 255;
 
     // encoding
-    uint8_t Invalid8bitChar = '?';
+    uint8_t Invalid8bitChar = 255;
+
+    // window
+    Color       BorderColor = { 128, 255, 128 };
+    TBorderSize BorderSize  = { 30, 30 };
+
 };
 
 extern Config config;

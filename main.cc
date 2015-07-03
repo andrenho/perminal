@@ -1,5 +1,7 @@
 #include <cstdint>
 #include <cstdlib>
+
+#include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
@@ -18,7 +20,7 @@ using namespace std;
 #include "bitmapfont.h"
 #include "xcbrenderer.h"
 
-#include "Vintl01.xbm"
+#include "latin1.xbm"  // default font
 
 Config config;
 #ifdef DEBUG
@@ -32,10 +34,10 @@ int main(int argc, char** argv)
     try {
 
         const PTY plugin;
-        const Matrix matrix(80, 25);
+        Matrix matrix(80, 25);
         const Terminal terminal(matrix);
 
-        const BitmapFont font = BitmapFont::FromXBM(Vintl01_width, Vintl01_height, Vintl01_bits, "ISO_8859-1");
+        const BitmapFont font = BitmapFont::FromXBM(latin1_width, latin1_height, latin1_bits, "ISO_8859-1");
         const XcbRenderer renderer(matrix, font);
 
         // get user input
@@ -43,6 +45,14 @@ int main(int argc, char** argv)
             while(terminal.Alive() && renderer.Running()) {
                 vector<uint8_t> data = terminal.ParseEvent(renderer.GetEvent());
                 plugin.Write(data);
+            }
+        });
+
+        // blink
+        thread t_blink([&terminal, &renderer, &matrix] {
+            while(terminal.Alive() && renderer.Running()) {
+                matrix.Blink();
+                this_thread::sleep_for(chrono::milliseconds(config.BlinkSpeed));
             }
         });
 
@@ -54,6 +64,7 @@ int main(int argc, char** argv)
         }
 
         t_output.join();
+        t_blink.join();
 
     } catch(RendererInitException& e) {
         fprintf(stderr, "perminal: %s\n", e.what());

@@ -9,7 +9,8 @@
 
 XcbRenderer::XcbRenderer(Matrix const& matrix, Font const& font) 
     : Renderer(matrix), c(xcb_connect(nullptr, nullptr)), window(xcb_generate_id(c)), 
-      font(font), keyboard(c), win_w(matrix.Width() * font.CharWidth()), win_h(matrix.Height() * font.CharHeight())
+      font(font), win_w(matrix.Width() * font.CharWidth()), win_h(matrix.Height() * font.CharHeight()),
+      keyboard(c)
 {
     // check open connection
     if(!c) {
@@ -77,6 +78,13 @@ XcbRenderer::~XcbRenderer()
 void 
 XcbRenderer::Update() const 
 { 
+    // check cursor
+    matrix.AddToDirty(matrix.Cursor());
+    if(matrix.CursorIntensity() != INVISIBLE) {
+        
+    }
+    
+    // draw chars
     for(auto const& p: matrix.Dirty()) {
         auto cell = matrix.Cells(p.x, p.y);
         DrawChar(p.x, p.y, cell.c, cell.attr);
@@ -91,7 +99,7 @@ XcbRenderer::GetEvent() const
     xcb_generic_event_t* e = xcb_wait_for_event(c);
     switch(e->response_type & ~0x80) {
     case XCB_EXPOSE: {
-        xcb_expose_event_t *ex = (xcb_expose_event_t *)e;
+        xcb_expose_event_t *ex = reinterpret_cast<xcb_expose_event_t *>(e);
         D("Expose event detected (%d %d %d %d) count %d", ex->x, ex->y, ex->width, ex->height, ex->count);
         RedrawBorder();
         int x1 = ex->x / font.CharWidth(),
@@ -197,7 +205,7 @@ XcbRenderer::GetCharPixmap(const char ch[4], Attributes const& attr) const
          * needed (for example, when the user changes the font) to call
          * xcb_free_pixmap for the pixmaps stored. */
 
-        D("Created char for '%s' (0x%x).", ch, ch[0] + (ch[1] << 8) + (ch[2] << 16) + (ch[3] << 24));
+        D("Created char for '%s' (0x%x...).", ch, ch[0]);
         return px;
     } else {
         return ci->second;

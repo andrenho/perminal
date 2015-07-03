@@ -6,6 +6,7 @@
 
 SRC=main.cc 			\
     emulator/debug.cc		\
+    emulator/charencoding.cc	\
     emulator/matrix.cc		\
     renderer/xcbrenderer.cc	\
     renderer/xkb_keyboard.cc	\

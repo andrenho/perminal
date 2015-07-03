@@ -1,14 +1,13 @@
 #ifndef BITMAPFONT_H
 #define BITMAPFONT_H
 
-#include <iconv.h>
-
 #include <cstdint>
 #include <string>
 #include <vector>
 using namespace std;
 
 #include "font.h"
+#include "charencoding.h"
 
 class BitmapFont : public Font {
 public:
@@ -25,7 +24,7 @@ private:
     void ApplyDim(vector<uint8_t>& px_image) const;
     void ApplyInvisible(vector<uint8_t>& px_image) const;
 
-    iconv_t cd;
+    CharEncoding ce;
 };
 
 #endif
