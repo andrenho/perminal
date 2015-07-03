@@ -19,7 +19,7 @@ public:
     // console
     Color  DefaultBGColor = { 255, 255, 255 };
     Color  DefaultFGColor = { 0, 0, 0 };
-    int    BlinkSpeed = 300;
+    int    BlinkSpeed = 400;
 
     // cursor
     bool        BlinkCursor = true;

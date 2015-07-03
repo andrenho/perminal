@@ -3,6 +3,7 @@
 #include <xcb/xcb.h>
 
 #include <cassert>
+#include <cstring>
 
 #include "config.h"
 #include "cursor.h"
@@ -60,6 +61,13 @@ XcbRenderer::XcbRenderer(Matrix const& matrix, Font const& font)
             mask, values);                              // masks
     xcb_map_window(c, window);
     xcb_flush(c);
+
+    // initial image (makes it look like it's fast)
+    xcb_generic_event_t* e;
+    do { e = xcb_wait_for_event(c); } while((e->response_type & ~0x80) != XCB_MAP_NOTIFY);
+    RedrawBorder();
+    xcb_flush(c);
+
     D("Window created.");
 
     // create GC
@@ -81,7 +89,7 @@ XcbRenderer::Update() const
 { 
     // draw chars
     for(auto const& p: matrix.Dirty()) {
-        auto cell = matrix.Cells(p.x, p.y);
+        auto const& cell = matrix.Cells(p.x, p.y);
         DrawChar(p.x, p.y, cell.c, cell.attr);
     }
     xcb_flush(c);
@@ -91,7 +99,8 @@ XcbRenderer::Update() const
 UserEvent 
 XcbRenderer::GetEvent() const 
 { 
-    xcb_generic_event_t* e = xcb_wait_for_event(c);
+    xcb_generic_event_t* e = xcb_poll_for_event(c);
+    if(!e) { return { { NOTHING } }; }
     switch(e->response_type & ~0x80) {
     case XCB_EXPOSE: {
         xcb_expose_event_t *ex = reinterpret_cast<xcb_expose_event_t *>(e);
@@ -104,7 +113,7 @@ XcbRenderer::GetEvent() const
         D("   Char exposed: (%d,%d) - (%d %d)", x1, y1, x2, y2);
         for(int x=max(x1, 0); x<min(x2, matrix.Width()); ++x) {
             for(int y=max(y1, 0); y<min(y2, matrix.Height()); ++y) {
-                auto cell = matrix.Cells(x, y);
+                auto const& cell = matrix.Cells(x, y);
                 DrawChar(x, y, cell.c, cell.attr);
             }
         }
@@ -130,10 +139,19 @@ XcbRenderer::GetEvent() const
     
 
 void 
-XcbRenderer::DrawChar(int x, int y, const char ch[4], Attributes attr) const
+XcbRenderer::DrawChar(int x, int y, const char chr[4], Attributes attr) const
 {
+    char ch[4];
+    memcpy(ch, chr, 4);
+
     // TODO - memoize cursor?
 
+    // is it blinking? then hide the characters
+    if(matrix.Blinking() && attr.blink) {
+        ch[0] = ' '; ch[1] = 0;
+    }
+
+    // draw cursor background
     assert(config.CursorType == BACKGROUND);
     const bool is_cursor = (matrix.cursor.intensity != Cursor::INVISIBLE) && 
         static_cast<P>(matrix.cursor) == P{x,y};
@@ -141,9 +159,11 @@ XcbRenderer::DrawChar(int x, int y, const char ch[4], Attributes attr) const
         attr.bg_color = matrix.cursor.color();
     }
     
+    // find position
     int px = config.BorderSize.LeftRight + (x * font.CharWidth());
     int py = config.BorderSize.TopBottom + (y * font.CharHeight());
 
+    // draw
     xcb_copy_area(c, GetCharPixmap(ch, attr), window, gc, 
             0, 0, px, py, font.CharWidth(), font.CharHeight());
 }

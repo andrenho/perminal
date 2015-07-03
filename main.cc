@@ -4,8 +4,8 @@
 #include <chrono>
 #include <memory>
 #include <string>
-#include <vector>
 #include <thread>
+#include <vector>
 using namespace std;
 
 #include "config.h"
@@ -40,30 +40,22 @@ int main(int argc, char** argv)
         const BitmapFont font = BitmapFont::FromXBM(latin1_width, latin1_height, latin1_bits, "ISO_8859-1");
         const XcbRenderer renderer(matrix, font);
 
-        // get user input
-        thread t_output([&terminal, &renderer, &plugin] {
-            while(terminal.Alive() && renderer.Running()) {
-                vector<uint8_t> data = terminal.ParseEvent(renderer.GetEvent());
-                plugin.Write(data);
-            }
-        });
-
-        thread t_render([&terminal, &renderer] { 
-            while(terminal.Alive() && renderer.Running()) {
-                renderer.Update();
-                this_thread::sleep_for(chrono::milliseconds(config.RenderUpdateMilliseconds));
-            }
-        });
-
-        // output to user
-        /*
         while(terminal.Alive() && renderer.Running()) {
-            vector<uint8_t> data = plugin.Read();
-            terminal.ParseData(data);
-        }
-        */
+            // get user input
+            vector<uint8_t> data_in = terminal.ParseEvent(renderer.GetEvent());
+            plugin.Write(data_in);
 
-        t_output.join();
+            // output things in the screen
+            vector<uint8_t> data_out = plugin.Read();
+            terminal.ParseData(data_out);
+            matrix.Update();
+
+            // update renderer
+            renderer.Update();
+            
+            // sleep
+            this_thread::sleep_for(chrono::milliseconds(config.RenderUpdateMilliseconds));
+        }
 
     } catch(RendererInitException& e) {
         fprintf(stderr, "perminal: %s\n", e.what());

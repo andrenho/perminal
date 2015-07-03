@@ -1,7 +1,8 @@
 - attributes (ok)
 - Matrix (ok)
-   + cursor
-- encodings in bitmap font
+   + cursor (ok)
+   + blink (ok)
+- encodings in bitmap font (ok)
 - Terminal/PTY
    + matrix PTY commands
 - my tic

@@ -1,5 +1,8 @@
 #include "matrix.h"
 
+
+#include <cassert>
+
 #include "debug.h"
 
 Matrix::Matrix(int w, int h)
@@ -13,7 +16,25 @@ Matrix::Matrix(int w, int h)
     }
 
     PrintChar("a");
+    CurrentAttr.blink = true;
     PrintChar("é");
+}
+
+
+void
+Matrix::Update()
+{
+    auto time = chrono::steady_clock::now() - last_blink;
+    if(time > chrono::milliseconds(config.BlinkSpeed)) {
+        blink_on = !blink_on;
+        last_blink = chrono::steady_clock::now();
+        // look for blinking cells
+        for(auto& kv: cells) {
+            if(kv.second.attr.blink) {
+                dirty.push_back(kv.first);
+            }
+        }
+    }
 }
 
 
@@ -24,6 +45,7 @@ Matrix::PrintChar(const char c[4])
     cells[cursor].c[1] = c[1];
     cells[cursor].c[2] = c[2];
     cells[cursor].c[3] = c[3];
+    cells[cursor].attr = CurrentAttr;
     dirty.push_back(cursor);
 
     // TODO - advance cursor

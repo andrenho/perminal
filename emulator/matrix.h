@@ -1,6 +1,7 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
+#include <chrono>
 #include <map>
 #include <vector>
 using namespace std;
@@ -14,6 +15,7 @@ public:
     Matrix(int w, int h);
 
     void PrintChar(const char c[4]);
+    void Update();
 
     vector<P> Dirty() const;
 
@@ -21,8 +23,15 @@ public:
     int Height() const { return h; }
     Cell const& Cells(int x, int y) const { return cells.at(P{ x, y }); }
 
-    Attributes CurrentAttr = DEFAULT_ATTR;
+    bool Blinking() const { return !blink_on; }
 
+private:
+    const Attributes DEFAULT_ATTR = { 
+        false,false,false,false,false,false,false,false,false,false, config.DefaultBGColor, config.DefaultFGColor,
+    };
+
+public:
+    Attributes CurrentAttr = DEFAULT_ATTR;
     Cursor cursor;
 
 private:
@@ -30,11 +39,9 @@ private:
     map<P, Cell> cells;
     mutable vector<P> dirty;
 
-    bool blink_on = true;
+    chrono::time_point<chrono::steady_clock> last_blink = chrono::steady_clock::now();
 
-    const Attributes DEFAULT_ATTR = { 
-        false,false,false,false,false,false,false,false,false,false, config.DefaultBGColor, config.DefaultFGColor,
-    };
+    bool blink_on = true;
 };
 
 #endif
