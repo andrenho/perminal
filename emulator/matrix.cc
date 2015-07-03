@@ -15,8 +15,9 @@ Matrix::Matrix(int w, int h)
         }
     }
 
-    PrintChar("a");
     CurrentAttr.blink = true;
+    CurrentAttr.italic = true;
+    PrintChar("A");
     PrintChar("é");
 }
 
