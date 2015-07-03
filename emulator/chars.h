@@ -2,6 +2,8 @@
 #define CHARS_H
 
 #include <cstdint>
+#include <type_traits>
+using namespace std;
 
 struct Color { 
     uint8_t r, g, b;
@@ -18,7 +20,7 @@ struct Color {
         return r != other.r || g != other.g || b != other.b;
     }
 };
-static_assert(std::is_pod<Color>::value, "Color must be a POD");
+static_assert(is_pod<Color>::value, "Color must be a POD");
 
 
 struct Attributes {
@@ -40,7 +42,7 @@ struct Attributes {
         return v;
     }
 };
-static_assert(std::is_pod<Attributes>::value, "Attributes must be a POD");
+static_assert(is_pod<Attributes>::value, "Attributes must be a POD");
 
 
 struct Cell {
@@ -55,7 +57,7 @@ struct Cell {
         return this->hash() < other.hash();
     }
 };
-static_assert(std::is_pod<Cell>::value, "Cell must be a POD");
+static_assert(is_pod<Cell>::value, "Cell must be a POD");
 
 
 #endif

@@ -5,6 +5,7 @@
 #include <cassert>
 
 #include "config.h"
+#include "cursor.h"
 #include "debug.h"
 
 XcbRenderer::XcbRenderer(Matrix const& matrix, Font const& font) 
@@ -78,12 +79,6 @@ XcbRenderer::~XcbRenderer()
 void 
 XcbRenderer::Update() const 
 { 
-    // check cursor
-    matrix.AddToDirty(matrix.Cursor());
-    if(matrix.CursorIntensity() != INVISIBLE) {
-        
-    }
-    
     // draw chars
     for(auto const& p: matrix.Dirty()) {
         auto cell = matrix.Cells(p.x, p.y);
@@ -135,13 +130,22 @@ XcbRenderer::GetEvent() const
     
 
 void 
-XcbRenderer::DrawChar(int x, int y, const char ch[4], Attributes const& attr) const
+XcbRenderer::DrawChar(int x, int y, const char ch[4], Attributes attr) const
 {
-    x = config.BorderSize.LeftRight + (x * font.CharWidth());
-    y = config.BorderSize.TopBottom + (y * font.CharHeight());
+    // TODO - memoize cursor?
+
+    assert(config.CursorType == BACKGROUND);
+    const bool is_cursor = (matrix.cursor.intensity != Cursor::INVISIBLE) && 
+        static_cast<P>(matrix.cursor) == P{x,y};
+    if(is_cursor) {
+        attr.bg_color = matrix.cursor.color();
+    }
+    
+    int px = config.BorderSize.LeftRight + (x * font.CharWidth());
+    int py = config.BorderSize.TopBottom + (y * font.CharHeight());
 
     xcb_copy_area(c, GetCharPixmap(ch, attr), window, gc, 
-            0, 0, x, y, font.CharWidth(), font.CharHeight());
+            0, 0, px, py, font.CharWidth(), font.CharHeight());
 }
 
 

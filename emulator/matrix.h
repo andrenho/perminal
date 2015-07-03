@@ -7,16 +7,7 @@ using namespace std;
 
 #include "chars.h"
 #include "config.h"
-
-struct P {
-    int x, y;
-
-    inline bool operator<(P const& other) const {
-        return ((x<<16) + y) < ((other.x<<16) + other.y);
-    }
-};
-
-enum ECursorIntensity { INVISIBLE, VISIBLE, VERY_VISIBLE };
+#include "cursor.h"
 
 class Matrix {
 public:
@@ -24,26 +15,21 @@ public:
 
     void PrintChar(const char c[4]);
 
-    inline void Blink() { blink_on = !blink_on; }
-
     vector<P> Dirty() const;
-    inline void AddToDirty(P p) const { dirty.push_back(p); }
 
     int Width() const { return w; }
     int Height() const { return h; }
     Cell const& Cells(int x, int y) const { return cells.at(P{ x, y }); }
-    P Cursor() const { return cursor; }
-    ECursorIntensity CursorIntensity() const;
 
     Attributes CurrentAttr = DEFAULT_ATTR;
+
+    Cursor cursor;
 
 private:
     int w, h;
     map<P, Cell> cells;
     mutable vector<P> dirty;
 
-    P cursor = { 0, 0 };
-    ECursorIntensity cursor_intensity = VISIBLE;
     bool blink_on = true;
 
     const Attributes DEFAULT_ATTR = { 

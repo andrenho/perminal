@@ -48,23 +48,22 @@ int main(int argc, char** argv)
             }
         });
 
-        // blink
-        thread t_blink([&terminal, &renderer, &matrix] {
+        thread t_render([&terminal, &renderer] { 
             while(terminal.Alive() && renderer.Running()) {
-                matrix.Blink();
-                this_thread::sleep_for(chrono::milliseconds(config.BlinkSpeed));
+                renderer.Update();
+                this_thread::sleep_for(chrono::milliseconds(config.RenderUpdateMilliseconds));
             }
         });
 
         // output to user
+        /*
         while(terminal.Alive() && renderer.Running()) {
             vector<uint8_t> data = plugin.Read();
             terminal.ParseData(data);
-            renderer.Update();
         }
+        */
 
         t_output.join();
-        t_blink.join();
 
     } catch(RendererInitException& e) {
         fprintf(stderr, "perminal: %s\n", e.what());

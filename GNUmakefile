@@ -5,6 +5,7 @@
 # 
 
 SRC=main.cc 			\
+    emulator/cursor.cc		\
     emulator/debug.cc		\
     emulator/charencoding.cc	\
     emulator/matrix.cc		\

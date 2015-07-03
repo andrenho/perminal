@@ -10,6 +10,8 @@ struct TBorderSize {
     uint16_t TopBottom;
 };
 
+enum ECursorType { BACKGROUND, ALTERNATE_CHAR, OVERWRITE_CHAR };
+
 class Config {
 public:
     void Initialize(int argc, char** argv) { (void) argc; (void) argv; }
@@ -20,11 +22,10 @@ public:
     int    BlinkSpeed = 300;
 
     // cursor
-    bool   BlinkCursor = true;
-    char   CursorVisibleChar[4] = { 127, 0, 0, 0 };
-    Color  CursorVisibleColor = { 0, 128, 0 };
-    char   CursorVeryVisibleChar[4] = { 127, 0, 0, 0 };
-    Color  CursorVeryVisibleColor = { 0, 255, 0 };
+    bool        BlinkCursor = true;
+    ECursorType CursorType = BACKGROUND;
+    Color       CursorVisibleColor = { 0, 128, 0 };
+    Color       CursorVeryVisibleColor = { 0, 255, 0 };
 
     // font
     double DimPercentage = 0.5;
@@ -38,6 +39,8 @@ public:
     Color       BorderColor = { 128, 255, 128 };
     TBorderSize BorderSize  = { 30, 30 };
 
+    // usage
+    int RenderUpdateMilliseconds = 20;
 };
 
 extern Config config;

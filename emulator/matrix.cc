@@ -3,7 +3,7 @@
 #include "debug.h"
 
 Matrix::Matrix(int w, int h)
-    : w(w), h(h), cells(), dirty()
+    : cursor(), w(w), h(h), cells(), dirty()
 {
     for(int x=0; x<w; ++x) {
         for(int y=0; y<h; ++y) {
@@ -11,26 +11,9 @@ Matrix::Matrix(int w, int h)
             dirty.push_back(P{x,y});
         }
     }
-}
 
-
-vector<P>
-Matrix::Dirty() const
-{
-    vector<P> cp = dirty;
-    dirty.clear();
-    return cp;
-}
-
-
-ECursorIntensity 
-Matrix::CursorIntensity() const 
-{ 
-    if(blink_on || !config.BlinkCursor) {
-        return cursor_intensity;
-    } else {
-        return INVISIBLE;
-    }
+    PrintChar("a");
+    PrintChar("é");
 }
 
 
@@ -46,6 +29,17 @@ Matrix::PrintChar(const char c[4])
     // TODO - advance cursor
     ++cursor.x;
 }
+
+
+vector<P>
+Matrix::Dirty() const
+{
+    vector<P> cp = dirty;
+    dirty.clear();
+    cp.push_back(cursor);
+    return cp;
+}
+
 
 
 // vim: ts=4:sw=4:sts=4:expandtab
