@@ -33,7 +33,7 @@ int main(int argc, char** argv)
 
     try {
 
-        const PTY plugin;
+        const PTY pty("xterm-256color");
         Matrix matrix(80, 25);
         const Terminal terminal(matrix);
 
@@ -43,10 +43,10 @@ int main(int argc, char** argv)
         while(terminal.Alive() && renderer.Running()) {
             // get user input
             vector<uint8_t> data_in = terminal.ParseEvent(renderer.GetEvent());
-            plugin.Write(data_in);
+            pty.Write(data_in);
 
             // output things in the screen
-            vector<uint8_t> data_out = plugin.Read();
+            vector<uint8_t> data_out = pty.Read();
             terminal.ParseData(data_out);
             matrix.Update();
 

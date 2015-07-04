@@ -24,8 +24,8 @@ public:
     // cursor
     bool        BlinkCursor = true;
     ECursorType CursorType = BACKGROUND;
-    Color       CursorVisibleColor = { 0, 128, 0 };
-    Color       CursorVeryVisibleColor = { 0, 255, 0 };
+    Color       CursorVisibleColor = { 0, 255, 0 };
+    Color       CursorVeryVisibleColor = { 255, 0, 255 };
 
     // font
     double DimPercentage = 0.5;

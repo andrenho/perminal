@@ -11,7 +11,7 @@ using namespace std;
 
 class Renderer {
 public:
-    Renderer(Matrix const& matrix) : matrix(matrix) {}
+    explicit Renderer(Matrix const& matrix) : matrix(matrix) {}
     virtual ~Renderer() {}
     virtual bool Running() const = 0;
     virtual UserEvent GetEvent() const = 0;
@@ -22,7 +22,7 @@ protected:
 };
 
 //
-// excpetions
+// exceptions
 //
 struct RendererInitException : public runtime_error {
     explicit RendererInitException(string const& msg) : runtime_error(msg) {}

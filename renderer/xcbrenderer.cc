@@ -63,8 +63,13 @@ XcbRenderer::XcbRenderer(Matrix const& matrix, Font const& font)
     xcb_flush(c);
 
     // initial image (makes it look like it's fast)
-    xcb_generic_event_t* e;
-    do { e = xcb_wait_for_event(c); } while((e->response_type & ~0x80) != XCB_MAP_NOTIFY);
+    xcb_generic_event_t* e = nullptr;
+    do { 
+        if(e) free(e);
+        e = xcb_wait_for_event(c); 
+    } while((e->response_type & ~0x80) != XCB_MAP_NOTIFY);
+    free(e);
+
     RedrawBorder();
     xcb_flush(c);
 

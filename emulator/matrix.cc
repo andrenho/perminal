@@ -14,11 +14,6 @@ Matrix::Matrix(int w, int h)
             dirty.push_back(P{x,y});
         }
     }
-
-    CurrentAttr.blink = true;
-    CurrentAttr.italic = true;
-    PrintChar("A");
-    PrintChar("é");
 }
 
 

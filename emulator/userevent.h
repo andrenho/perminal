@@ -9,7 +9,7 @@ struct UserEvent {
         uint8_t chr[5] = { 0, 0, 0, 0, 0 };
     };
 
-    UserEvent(UserEventType type) : type(type) {}
+    explicit UserEvent(UserEventType type) : type(type) {}
 };
 
 #endif

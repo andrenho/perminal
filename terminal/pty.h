@@ -1,6 +1,9 @@
 #ifndef PTY_H
 #define PTY_H
 
+#include <cstdint>
+#include <string>
+#include <stdexcept>
 #include <vector>
 using namespace std;
 
@@ -8,10 +11,22 @@ using namespace std;
 
 class PTY : public Plugin {
 public:
-    PTY() {}
+    PTY(string const& term);
+    ~PTY();
 
-    void Write(vector<uint8_t> const& data) const { (void) data; }
-    vector<uint8_t> Read() const { return {}; }
+    void Write(vector<uint8_t> const& data) const;
+    vector<uint8_t> Read() const;
+
+private:
+    int fd = 0;
+};
+
+
+//
+// exceptions
+//
+struct PTYException : public runtime_error {
+    explicit PTYException(string const& msg) : runtime_error(msg) {}
 };
 
 #endif
