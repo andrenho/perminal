@@ -1,0 +1,52 @@
+@startuml
+
+participant Main
+participant Plugin
+participant Terminal
+participant Matrix
+participant Renderer
+
+== Get user input (keyboard) ==
+
+
+Main -> Renderer : GetEvent()
+activate Main
+activate Renderer
+Renderer --> Main: //event: UserEvent//
+deactivate Renderer
+
+Main -> Terminal : ParseEvent(event)
+activate Terminal
+Terminal --> Main : //buffer: uint8_t*//
+deactivate Terminal
+
+Main ->o Plugin : Write(buffer)
+
+deactivate Main
+
+== Get plugin input (system) ==
+
+Main -> Plugin : Read()
+activate Plugin
+Plugin -> Main : //buffer: uint8_t*//
+deactivate Plugin
+
+Main -> Terminal : ParsePluginOutput(buffer)
+activate Terminal
+Terminal -> Main : //cmd: Command//
+deactivate Terminal
+
+Main ->o Matrix : Do(cmd)
+
+== Update things ==
+
+Main ->o Matrix : Update()
+Main ->o Renderer : Update()
+
+== Sleep ==
+
+... sleep ...
+
+@enduml
+
+// vim: ts=4:sw=4:sts=4:expandtab

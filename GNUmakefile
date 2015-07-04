@@ -9,6 +9,7 @@ SRC=main.cc 			\
     emulator/debug.cc		\
     emulator/charencoding.cc	\
     emulator/matrix.cc		\
+    emulator/dumbterminal.cc	\
     terminal/pty.cc		\
     renderer/xcbrenderer.cc	\
     renderer/xkb_keyboard.cc	\
@@ -21,7 +22,7 @@ SRC=main.cc 			\
 
 # libraries
 CPPFLAGS += `pkg-config --cflags xcb xcb-xkb xkbcommon xkbcommon-x11` 
-LDFLAGS += `pkg-config --libs xcb xcb-xkb xkbcommon xkbcommon-x11` -lpthread
+LDFLAGS += `pkg-config --libs xcb xcb-xkb xkbcommon xkbcommon-x11` -lutil
 
 # header directory
 CPPFLAGS += -Iemulator -Iterminal -Irenderer -isystem renderer/system

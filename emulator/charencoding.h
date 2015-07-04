@@ -12,6 +12,7 @@ public:
     ~CharEncoding();
 
     bool Convert(const char from[4], char to[4]) const;
+    bool IsComplete(const char c[4], int sz) const;
 
     // uncopyable
     CharEncoding(CharEncoding const& ce) = default;

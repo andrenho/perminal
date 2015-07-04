@@ -14,20 +14,13 @@ public:
     PTY(string const& term);
     ~PTY();
 
-    void Write(vector<uint8_t> const& data) const;
-    vector<uint8_t> Read() const;
+    void Write(const uint8_t* data, int n) const;
+    int Read(uint8_t* data, int max_sz) const;
 
 private:
     int fd = 0;
 };
 
-
-//
-// exceptions
-//
-struct PTYException : public runtime_error {
-    explicit PTYException(string const& msg) : runtime_error(msg) {}
-};
 
 #endif
 

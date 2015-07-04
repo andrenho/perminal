@@ -1,18 +1,48 @@
 #include "matrix.h"
 
-
 #include <cassert>
+#include <cstdlib>
 
 #include "debug.h"
 
 Matrix::Matrix(int w, int h)
-    : cursor(), w(w), h(h), cells(), dirty()
+    : cursor(), w(w), h(h), cells(), dirty(), dirty_empty_screen()
 {
-    for(int x=0; x<w; ++x) {
-        for(int y=0; y<h; ++y) {
-            cells[P{x,y}] = { { ' ', 0, 0, 0 }, DEFAULT_ATTR };
+    dirty.reserve(w*h);
+    dirty_empty_screen.reserve(w*h);
+    for(int y=0; y<h; ++y) {
+        auto line = make_unique<vector<Cell>>();
+        for(int x=0; x<w; ++x) {
+            line->push_back(EmptyCell());
             dirty.push_back(P{x,y});
+            dirty_empty_screen.push_back(P{x,y});
         }
+        cells.push_back(move(line));
+    }
+    MoveCursor(0, 0);
+}
+
+
+void 
+Matrix::Do(Command const& cmd, const uint32_t pars[256])
+{
+    switch(cmd) {
+        case NONE: return;
+        case REGULAR_INPUT: {
+                char p[4] = { 
+                    static_cast<char>(pars[0]), 
+                    static_cast<char>(pars[1]), 
+                    static_cast<char>(pars[2]), 
+                    static_cast<char>(pars[3])
+                };
+                PrintChar(p);
+                break;
+            }
+        case LINE_FEED:       AdvanceY(1); break;
+        case CARRIAGE_RETURN: MoveCursor(0, cursor.y); break;
+        case BELL:            /* TODO */ break;
+        default: 
+            abort();
     }
 }
 
@@ -25,9 +55,11 @@ Matrix::Update()
         blink_on = !blink_on;
         last_blink = chrono::steady_clock::now();
         // look for blinking cells
-        for(auto& kv: cells) {
-            if(kv.second.attr.blink) {
-                dirty.push_back(kv.first);
+        for(int y=0; y<h; ++y) {
+            for(int x=0; x<w; ++x) {
+                if(cells[y]->at(x).attr.blink) {
+                    dirty.push_back(P{x, y});
+                }
             }
         }
     }
@@ -37,15 +69,14 @@ Matrix::Update()
 void 
 Matrix::PrintChar(const char c[4])
 {
-    cells[cursor].c[0] = c[0];
-    cells[cursor].c[1] = c[1];
-    cells[cursor].c[2] = c[2];
-    cells[cursor].c[3] = c[3];
-    cells[cursor].attr = CurrentAttr;
+    cells[cursor.y]->at(cursor.x).c[0] = c[0];
+    cells[cursor.y]->at(cursor.x).c[1] = c[1];
+    cells[cursor.y]->at(cursor.x).c[2] = c[2];
+    cells[cursor.y]->at(cursor.x).c[3] = c[3];
+    cells[cursor.y]->at(cursor.x).attr = CurrentAttr;
     dirty.push_back(cursor);
 
-    // TODO - advance cursor
-    ++cursor.x;
+    AdvanceX(1);
 }
 
 
@@ -54,10 +85,75 @@ Matrix::Dirty() const
 {
     vector<P> cp = dirty;
     dirty.clear();
-    cp.push_back(cursor);
+    redraw_screen = false;
     return cp;
 }
 
+
+void 
+Matrix::MoveCursor(int x, int y)
+{
+    dirty.push_back(cursor);
+    cursor.x = x;
+    cursor.y = y;
+    dirty.push_back(cursor);
+}
+
+
+void
+Matrix::AdvanceX(int n)
+{
+    if(cursor.x+n >= w) {
+        MoveCursor(0, cursor.y);
+        AdvanceY(1);
+    } else {
+        MoveCursor(cursor.x+n, cursor.y);
+    }
+}
+
+
+void
+Matrix::AdvanceY(int n)
+{
+    int lines_to_scroll = (cursor.y + n) - h + 1;
+    if(lines_to_scroll > 0) {
+        ScrollLines(lines_to_scroll);
+    }
+    MoveCursor(cursor.x, min(cursor.y+n, h-1));
+}
+
+
+void
+Matrix::ScrollLines(int n)
+{
+    // move lines
+    for(int y=n; y<h; ++y) {
+        cells[y-n] = move(cells.at(y));
+    }
+    
+    // clear lines
+    for(int y=h-n; y<h; ++y) {
+        auto line = new vector<Cell>();
+        for(int x=0; x<w; ++x) {
+            line->push_back(EmptyCell());
+        }
+        cells[y].reset(line);
+    }
+
+    RedrawScreen();
+}
+
+
+void 
+Matrix::RedrawScreen()
+{
+    if(redraw_screen) {
+        return;
+    }
+
+    dirty = dirty_empty_screen;
+    redraw_screen = true;
+}
 
 
 // vim: ts=4:sw=4:sts=4:expandtab

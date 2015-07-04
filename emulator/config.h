@@ -40,6 +40,7 @@ public:
     TBorderSize BorderSize  = { 30, 30 };
 
     // usage
+    int BufferSize = 1024;
     int RenderUpdateMilliseconds = 20;
 };
 

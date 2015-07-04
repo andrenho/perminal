@@ -105,7 +105,9 @@ UserEvent
 XcbRenderer::GetEvent() const 
 { 
     xcb_generic_event_t* e = xcb_poll_for_event(c);
-    if(!e) { return { { NOTHING } }; }
+    if(!e) { 
+        return UserEvent(NOTHING); 
+    }
     switch(e->response_type & ~0x80) {
     case XCB_EXPOSE: {
         xcb_expose_event_t *ex = reinterpret_cast<xcb_expose_event_t *>(e);
@@ -126,8 +128,12 @@ XcbRenderer::GetEvent() const
         break;
     }
     case XCB_KEY_PRESS: {
-            char chr[5] = { 0, 0, 0, 0, 0 };
-            keyboard.ParseKeyPress(reinterpret_cast<xcb_key_press_event_t*>(e), chr);
+        char chr[5] = { 0, 0, 0, 0, 0 };
+        keyboard.ParseKeyPress(reinterpret_cast<xcb_key_press_event_t*>(e), chr);
+        if(chr[0] != 0) {
+            free(e);
+            return UserEvent(KEYPRESS, chr);
+        }
         break;
     }
     case XCB_DESTROY_NOTIFY:
@@ -139,7 +145,7 @@ XcbRenderer::GetEvent() const
         break;
     }
     free(e);
-    return { { NOTHING } }; 
+    return UserEvent(NOTHING);
 }
     
 

@@ -9,8 +9,9 @@
 using namespace std;
 
 #include "config.h"
+#include "commands.h"
 #include "plugin.h"
-#include "terminal.h"
+#include "dumbterminal.h"
 #include "font.h"
 #include "renderer.h"
 #include "userevent.h"
@@ -33,29 +34,53 @@ int main(int argc, char** argv)
 
     try {
 
-        const PTY pty("xterm-256color");
+        const DumbTerminal terminal;
+
+        const PTY pty(terminal.TERM());
         Matrix matrix(80, 25);
-        const Terminal terminal(matrix);
 
         const BitmapFont font = BitmapFont::FromXBM(latin1_width, latin1_height, latin1_bits, "ISO_8859-1");
         const XcbRenderer renderer(matrix, font);
 
-        while(terminal.Alive() && renderer.Running()) {
+        uint8_t* buffer = new uint8_t[config.BufferSize];
+        uint32_t pars[256];
+        uint32_t u = 0;
+        while(renderer.Running()) {
+
             // get user input
-            vector<uint8_t> data_in = terminal.ParseEvent(renderer.GetEvent());
-            pty.Write(data_in);
+            const UserEvent event = renderer.GetEvent();
+            if(event.type != NOTHING) {
+                const int n = terminal.ParseUserEvent(event, buffer);
+                if(n) {
+                    pty.Write(buffer, n);
+                }
+            }
 
             // output things in the screen
-            vector<uint8_t> data_out = pty.Read();
-            terminal.ParseData(data_out);
-            matrix.Update();
+            const int m = pty.Read(buffer, config.BufferSize);
+            for(int i=0; i<m; ++i) {
+                Command cmd = terminal.ParsePluginOutput(buffer[i], pars);
+                matrix.Do(cmd, pars);
+            }
+            if(m == -1) {
+                break;  // the connection was cut
+            }
 
-            // update renderer
+            if(m == 0) {
+                // update renderer
+                matrix.Update();
+            }
+
             renderer.Update();
             
             // sleep
-            this_thread::sleep_for(chrono::milliseconds(config.RenderUpdateMilliseconds));
+            if(m == 0) {  // sleep only if there was no input
+                this_thread::sleep_for(chrono::milliseconds(config.RenderUpdateMilliseconds));
+            }
+
+            ++u;
         }
+        delete[] buffer;
 
     } catch(RendererInitException& e) {
         fprintf(stderr, "perminal: %s\n", e.what());

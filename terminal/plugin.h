@@ -7,8 +7,15 @@ using namespace std;
 class Plugin {
 public:
     virtual ~Plugin() {}
-    virtual void Write(vector<uint8_t> const& data) const = 0;
-    virtual vector<uint8_t> Read() const = 0;
+    virtual void Write(const uint8_t* data, int n) const = 0;
+    virtual int Read(uint8_t* data, int max_sz) const = 0;
+};
+
+//
+// exceptions
+//
+struct PluginException : public runtime_error {
+    explicit PluginException(string const& msg) : runtime_error(msg) {}
 };
 
 #endif
