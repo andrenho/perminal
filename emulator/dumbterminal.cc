@@ -29,21 +29,23 @@ DumbTerminal::ParseUserEvent(UserEvent const& event, uint8_t* data) const
 Command 
 DumbTerminal::ParsePluginOutput(uint8_t c, uint32_t pars[256]) const
 {
-    // TODO - bel, cr, cud1, ind
-
     // rotate buffer
     assert(buf_size < 4);  // TODO
     buf[buf_size++] = c;
     if(ce.IsComplete(buf, buf_size)) {
+        if(buf[0] < 32) {
+            buf_size = 0;
+        }
         switch(buf[0]) {
             case 7:
-                buf_size = 0;
                 return BELL;
+            case 8:
+                return BACKSPACE;
+            case 9:
+                return TAB;
             case 10:
-                buf_size = 0;
                 return LINE_FEED;
             case 13:
-                buf_size = 0;
                 return CARRIAGE_RETURN;
             case 27:
                 // TODO

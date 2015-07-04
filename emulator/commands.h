@@ -5,6 +5,8 @@ enum Command {
     NONE,
     REGULAR_INPUT,
 
+    BACKSPACE,
+    TAB,
     LINE_FEED,
     CARRIAGE_RETURN,
     BELL,

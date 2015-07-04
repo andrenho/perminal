@@ -38,9 +38,11 @@ Matrix::Do(Command const& cmd, const uint32_t pars[256])
                 PrintChar(p);
                 break;
             }
-        case LINE_FEED:       AdvanceY(1); break;
-        case CARRIAGE_RETURN: MoveCursor(0, cursor.y); break;
-        case BELL:            /* TODO */ break;
+        case BACKSPACE:         if(cursor.x > 0) { AdvanceX(-1); } break;
+        case TAB:               if(cursor.x < (w-8)) { AdvanceX(8 - (cursor.x % 8)); } break;
+        case LINE_FEED:         AdvanceY(1); break;
+        case CARRIAGE_RETURN:   MoveCursor(0, cursor.y); break;
+        case BELL:              /* TODO */ printf("\a"); fflush(stdout); break;
         default: 
             abort();
     }

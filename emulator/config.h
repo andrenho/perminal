@@ -33,7 +33,7 @@ public:
     int UnderlineIntensity = 255;
 
     // encoding
-    uint8_t Invalid8bitChar = 255;
+    uint8_t Invalid8bitChar = 127;
 
     // window
     Color       BorderColor = { 128, 255, 128 };
@@ -42,6 +42,8 @@ public:
     // usage
     int BufferSize = 1024;
     int RenderUpdateMilliseconds = 20;
+
+    // TODO - bell type
 };
 
 extern Config config;

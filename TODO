@@ -3,8 +3,9 @@
    + cursor (ok)
    + blink (ok)
 - encodings in bitmap font (ok)
-- Terminal/PTY
-   + matrix PTY commands
+- Terminal/PTY (ok)
+   + matrix PTY commands (ok)
+- make install
 - my tic
 - xterm-256color
 - resize
