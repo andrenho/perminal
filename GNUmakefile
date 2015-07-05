@@ -188,7 +188,7 @@ dist:
 	mkdir perminal-${VERSION}
 	cp -R GNUmakefile README INSTALL TODO main.cc perminal-${VERSION}
 	cp -R emulator terminal renderer perminal-${VERSION}
-	tar cvf perminal-${VERSION}.tar.gz perminal-${VERSION}
+	tar cjvf perminal-${VERSION}.tar.bz2 perminal-${VERSION}
 	rm -rf perminal-${VERSION}
 
 checklibs:
