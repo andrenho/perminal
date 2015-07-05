@@ -119,6 +119,8 @@ XcbRenderer::GetEvent() const
     if(!e) { 
         return UserEvent(NOTHING); 
     }
+
+    UserEvent ev(NOTHING);
     switch(e->response_type & ~0x80) {
     case XCB_EXPOSE: {
         xcb_expose_event_t *ex = reinterpret_cast<xcb_expose_event_t *>(e);
@@ -142,13 +144,14 @@ XcbRenderer::GetEvent() const
         char chr[5] = { 0, 0, 0, 0, 0 };
         keyboard.ParseKeyPress(reinterpret_cast<xcb_key_press_event_t*>(e), chr);
         if(chr[0] != 0) {
-            free(e);
-            return UserEvent(KEYPRESS, chr);
+            ev = UserEvent(KEYPRESS, chr);
         }
         break;
     }
     case XCB_CONFIGURE_NOTIFY: {
-        D("resize");
+        xcb_configure_notify_event_t *ex = reinterpret_cast<xcb_configure_notify_event_t *>(e);
+        ev = UserEvent(RESIZE, ex->width, ex->height);
+        D("Window resized to %d %d", ex->width, ex->height);
         break;
     }
     case XCB_DESTROY_NOTIFY:
@@ -160,7 +163,7 @@ XcbRenderer::GetEvent() const
         break;
     }
     free(e);
-    return UserEvent(NOTHING);
+    return ev;
 }
     
 
