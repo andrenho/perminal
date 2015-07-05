@@ -13,7 +13,7 @@
    - OPTIMIZE by default (no warnings) (ok)
    - window name (ok)
    - initialize shell correctly (ok)
-   - resize
+   - resize (ok)
    - keys (?)
 - my tic
 - xterm-256color

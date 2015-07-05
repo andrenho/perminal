@@ -128,18 +128,20 @@ Matrix::AdvanceY(int n)
 void
 Matrix::ScrollLines(int n)
 {
-    // move lines
-    for(int y=n; y<h; ++y) {
-        cells[y-n] = move(cells.at(y));
-    }
-    
-    // clear lines
-    for(int y=h-n; y<h; ++y) {
-        auto line = new vector<Cell>();
-        for(int x=0; x<w; ++x) {
-            line->push_back(EmptyCell());
+    if(n > 0) {
+        // move lines
+        for(int y=n; y<h; ++y) {
+            cells[y-n] = move(cells.at(y));
         }
-        cells[y].reset(line);
+        
+        // clear lines
+        for(int y=h-n; y<h; ++y) {
+            auto line = new vector<Cell>();
+            for(int x=0; x<w; ++x) {
+                line->push_back(EmptyCell());
+            }
+            cells[y].reset(line);
+        }
     }
 
     RedrawScreen();
