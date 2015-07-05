@@ -41,6 +41,7 @@ XcbRenderer::XcbRenderer(Matrix const& matrix, Font const& font)
     uint32_t values[2] = {
         screen->white_pixel,
         XCB_EVENT_MASK_STRUCTURE_NOTIFY 
+            | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY
             | XCB_EVENT_MASK_EXPOSURE
             | XCB_EVENT_MASK_KEY_PRESS
     };
@@ -144,6 +145,10 @@ XcbRenderer::GetEvent() const
             free(e);
             return UserEvent(KEYPRESS, chr);
         }
+        break;
+    }
+    case XCB_CONFIGURE_NOTIFY: {
+        D("resize");
         break;
     }
     case XCB_DESTROY_NOTIFY:

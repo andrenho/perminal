@@ -48,8 +48,8 @@ DumbTerminal::ParsePluginOutput(uint8_t c, uint32_t pars[256]) const
             case 13:
                 return CARRIAGE_RETURN;
             case 27:
-                // TODO
-                break;
+                pars[0] = 27;   // useful for testing
+                return REGULAR_INPUT;
             default:
                 // copy buffer to parameters
                 pars[0] = buf[0]; pars[1] = buf[1]; pars[2] = buf[2]; pars[3] = buf[3];

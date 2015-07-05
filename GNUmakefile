@@ -107,12 +107,21 @@ $(info ----------------)
 
 OBJ = ${SRC:.cc=.o}
 
-.cc.o:
+.cc.o: 
 ifneq (${DEBUG_MAKE},1)	
 	@echo ${CXX} -c $<
 endif
 	${Q} ${CXX} -c ${CPPFLAGS} ${CXXFLAGS} $< -o $@
 
+# 
+# compile font image
+#
+main.cc: renderer/latin1.xbm
+
+renderer/latin1.xbm: renderer/latin1.png
+	@echo CONVERT $@
+	@convert $< $@
+	@sed -i 's/static char/static unsigned char/g' renderer/latin1.xbm
 
 #
 # rules
