@@ -100,6 +100,16 @@ PTY::Read(uint8_t* data, int max_sz) const
     return nread;
 }
 
+    
+void 
+PTY::Resize(int w, int h) const
+{
+    struct winsize ws = { h, w, 0, 0 };
+    if(ioctl(fd, TIOCSWINSZ, &ws) < 0) {
+        D("Couldn't set window size.\n");
+    }
+}
+
 
 void
 PTY::PrintMOTD() const

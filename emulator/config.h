@@ -40,7 +40,7 @@ public:
     TBorderSize BorderSize  = { 30, 30 };
 
     // usage
-    int BufferSize = 1024;
+    int BufferSize = 16384;
     int RenderUpdateMilliseconds = 20;
 
     // TODO - bell type

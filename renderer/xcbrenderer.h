@@ -47,7 +47,7 @@ private:
     // class data
     Font const& font;
     mutable bool active = true;
-    uint16_t win_w, win_h;
+    mutable uint16_t win_w, win_h;
     XkbKeyboard keyboard;
 
     // uncopyable

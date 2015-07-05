@@ -9,6 +9,7 @@ public:
     virtual ~Plugin() {}
     virtual void Write(const uint8_t* data, int n) const = 0;
     virtual int Read(uint8_t* data, int max_sz) const = 0;
+    virtual void Resize(int w, int h) const { (void)w; (void)h; }
 };
 
 //

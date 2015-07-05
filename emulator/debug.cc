@@ -18,6 +18,13 @@ Debug::Info(const char* fmt, ...) const
 
 
 void 
+Debug::InfoCharacter(char c, bool complete) const
+{
+    fprintf(stderr, "[%3d '%c'%c ", static_cast<unsigned char>(c), c >= 32 && c < 127 ? c : '#', complete ? ']' : '>');
+}
+
+
+void 
 Debug::Assert(bool validation) const
 {
     if(!validation) {

@@ -147,6 +147,52 @@ Matrix::ScrollLines(int n)
 
 
 void 
+Matrix::Resize(int nw, int nh)
+{
+    D("Resizing matrix from %dx%d to %dx%d\n", w, h, nw, nh);
+
+    // adjust rows
+    if(nh < h) {
+        if(cursor.y >= nh) {
+            ScrollLines(cursor.y - nh - 1);
+            MoveCursor(cursor.x, cursor.y - (cursor.y - nh)-1);
+        }
+        for(int y=nh; y<h; ++y) {
+            cells.pop_back();
+        }
+    } else if(nh > h) {
+        for(int y=h; y<nh; ++y) {
+            auto line = make_unique<vector<Cell>>();
+            for(int x=0; x<w; ++x) {
+                line->push_back(EmptyCell());
+                dirty.push_back(P{x,y});
+                dirty_empty_screen.push_back(P{x,y});
+            }
+            cells.push_back(move(line));
+        }
+    }
+    ASSERT(cells.size() == nh);
+    h = nh;
+
+    // adjust columns
+    for(int y=0; y<h; ++y) {
+        if(nw<w) {
+            for(int x=nw; x<w; ++x) {
+                cells[y]->pop_back();
+            }
+        } else if(nw>w) {
+            for(int x=w; x<nw; ++x) {
+                cells[y]->push_back(EmptyCell());
+                dirty.push_back(P{x,y});
+            }
+        }
+        ASSERT(cells[y]->size() == nw);
+    }
+    w = nw;
+}
+
+
+void 
 Matrix::RedrawScreen()
 {
     if(redraw_screen) {

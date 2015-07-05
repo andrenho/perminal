@@ -16,6 +16,7 @@ public:
 
     void Write(const uint8_t* data, int n) const;
     int Read(uint8_t* data, int max_sz) const;
+    void Resize(int w, int h) const;
 
 private:
     void PrintMOTD() const;

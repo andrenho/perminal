@@ -105,8 +105,10 @@ XcbRenderer::Update() const
 { 
     // draw chars
     for(auto const& p: matrix.Dirty()) {
-        auto const& cell = matrix.Cells(p.x, p.y);
-        DrawChar(p.x, p.y, cell.c, cell.attr);
+        if(p.x < matrix.Width() && p.y < matrix.Height()) {
+            auto const& cell = matrix.Cells(p.x, p.y);
+            DrawChar(p.x, p.y, cell.c, cell.attr);
+        }
     }
     xcb_flush(c);
 }
@@ -150,8 +152,14 @@ XcbRenderer::GetEvent() const
     }
     case XCB_CONFIGURE_NOTIFY: {
         xcb_configure_notify_event_t *ex = reinterpret_cast<xcb_configure_notify_event_t *>(e);
-        ev = UserEvent(RESIZE, ex->width, ex->height);
-        D("Window resized to %d %d", ex->width, ex->height);
+        int cw = (ex->width - (2 * config.BorderSize.LeftRight)) / font.CharWidth(),
+            ch = (ex->height - (2 * config.BorderSize.TopBottom)) / font.CharHeight();
+        D("Window resized to %d %d (chars %dx%d)", ex->width, ex->height, cw, ch);
+        win_w = (ex->width - (2 * config.BorderSize.LeftRight));
+        win_h = (ex->height - (2 * config.BorderSize.TopBottom));
+        ev = UserEvent(RESIZE, cw, ch);
+        RedrawBorder();
+        xcb_flush(c);
         break;
     }
     case XCB_DESTROY_NOTIFY:
@@ -170,6 +178,10 @@ XcbRenderer::GetEvent() const
 void 
 XcbRenderer::DrawChar(int x, int y, const char chr[4], Attributes attr) const
 {
+    if(x >= matrix.Width() || y >= matrix.Height()) {
+        return;
+    }
+
     char ch[4];
     memcpy(ch, chr, 4);
 

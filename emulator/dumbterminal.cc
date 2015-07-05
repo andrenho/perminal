@@ -33,22 +33,26 @@ DumbTerminal::ParsePluginOutput(uint8_t c, uint32_t pars[256]) const
     assert(buf_size < 4);  // TODO
     buf[buf_size++] = c;
     if(ce.IsComplete(buf, buf_size)) {
-        if(buf[0] < 32) {
-            buf_size = 0;
-        }
+        C(c, true);
         switch(buf[0]) {
             case 7:
+                buf_size = 0;
                 return BELL;
             case 8:
+                buf_size = 0;
                 return BACKSPACE;
             case 9:
+                buf_size = 0;
                 return TAB;
             case 10:
+                buf_size = 0;
                 return LINE_FEED;
             case 13:
+                buf_size = 0;
                 return CARRIAGE_RETURN;
             case 27:
                 pars[0] = 27;   // useful for testing
+                buf_size = 0;
                 return REGULAR_INPUT;
             default:
                 // copy buffer to parameters
@@ -57,6 +61,8 @@ DumbTerminal::ParsePluginOutput(uint8_t c, uint32_t pars[256]) const
                 buf_size = 0;
                 return REGULAR_INPUT;
         }
+    } else {
+        C(c, false);
     }
     return NONE;
 }

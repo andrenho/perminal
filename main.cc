@@ -49,6 +49,10 @@ int main(int argc, char** argv)
 
             // get user input
             const UserEvent event = renderer.GetEvent();
+            if(event.type == RESIZE) {
+                pty.Resize(event.size[0], event.size[1]);
+                matrix.Resize(event.size[0], event.size[1]);
+            }
             if(event.type != NOTHING) {
                 const int n = terminal.ParseUserEvent(event, buffer);
                 if(n) {

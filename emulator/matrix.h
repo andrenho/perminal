@@ -25,6 +25,8 @@ public:
     inline Cell const& Cells(int x, int y) const { return cells[y]->at(x); }
     inline bool Blinking() const { return !blink_on; }
 
+    void Resize(int w, int h);
+
     Cursor cursor;
 
 private:

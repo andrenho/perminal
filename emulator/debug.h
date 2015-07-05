@@ -12,6 +12,8 @@ public:
     //void Info(string const& s) { Info("%s", s.c_str()); }
     void Info(const char* fmt, ...) const __attribute__ ((format (printf, 2, 3)));
 
+    void InfoCharacter(char c, bool complete=true) const;
+
     void Assert(bool validation) const;
     void Assert(function<bool()> v_func) const;
     void Assert(bool validation, const char* fmt, ...) const __attribute__ ((format (printf, 3, 4)));
@@ -20,10 +22,12 @@ public:
 
 extern Debug debug;
 
+#define C(...) debug.InfoCharacter(__VA_ARGS__)
 #define D(...) debug.Info(__VA_ARGS__)
 #define ASSERT(...) debug.Assert(__VA_ARGS__)
 
 #else
+#  define C(...)
 #  define D(...)
 #  define ASSERT(...)
 #endif
