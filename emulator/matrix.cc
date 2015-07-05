@@ -173,7 +173,7 @@ Matrix::Resize(int nw, int nh)
             cells.push_back(move(line));
         }
     }
-    ASSERT(cells.size() == nh);
+    ASSERT(cells.size() == static_cast<size_t>(nh));
     h = nh;
 
     // adjust columns
@@ -188,7 +188,7 @@ Matrix::Resize(int nw, int nh)
                 dirty.push_back(P{x,y});
             }
         }
-        ASSERT(cells[y]->size() == nw);
+        ASSERT(cells[y]->size() == static_cast<size_t>(nw));
     }
     w = nw;
 }
