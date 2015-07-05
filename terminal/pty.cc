@@ -21,9 +21,9 @@ PTY::PTY(string const& term)
     }
     D("Using the following shell: %s", shell);
 
-
     // fork a new PTY
     pid_t pid;
+    D("Forking a new PTY...");
     if((pid = forkpty(&fd, nullptr, nullptr, nullptr)) < 0) {
         perror("forkpty");
         throw PluginException("Could not for a new PTY.");
@@ -36,10 +36,10 @@ PTY::PTY(string const& term)
         if(setenv("TERM", term.c_str(), 1)) {
             perror("putenv");
         }
-        //D("(child) $TERM set to %s", term.c_str());
+        PrintMOTD();
         
         // initialize shell
-        if(execlp(shell, "sh", nullptr) == -1) {
+        if(execlp(shell, "", nullptr) == -1) {
             perror("execlp");
             throw PluginException("Could not create the new process.");
         }
@@ -98,6 +98,21 @@ PTY::Read(uint8_t* data, int max_sz) const
     }
 
     return nread;
+}
+
+
+void
+PTY::PrintMOTD() const
+{
+#ifndef DEBUG
+    printf("`perminal` aims to be a very fast, small, highly compliant and highly\n");
+    printf("configurable terminal emulator for various operating systems, with multiple\n");
+    printf("front-ends and multiple-backends.\n");
+    printf("\n");
+    printf("Right now, it is niether of these things. This is a very alpha release, so DO\n");
+    printf("NOT USE IN PRODUCTION ENVIRONMENTS.\n");
+    printf("\n");
+#endif
 }
 
 

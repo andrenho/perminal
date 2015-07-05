@@ -1,3 +1,7 @@
+VERSION='0.0.1'
+
+PKG_CONFIG_LIBS = xcb xcb-xkb xcb-atom xkbcommon xkbcommon-x11
+
 .DEFAULT_GOAL = perminal
 
 #
@@ -20,24 +24,22 @@ SRC=main.cc 			\
 # compilation options
 #
 
-# libraries
-CPPFLAGS += `pkg-config --cflags xcb xcb-xkb xkbcommon xkbcommon-x11` 
-LDFLAGS += `pkg-config --libs xcb xcb-xkb xkbcommon xkbcommon-x11` -lutil
+# installation directory
+PREFIX=/usr/local
+
+# check for libraries
+CPPFLAGS += `pkg-config --cflags ${PKG_CONFIG_LIBS}` 
+LDFLAGS += `pkg-config --libs ${PKG_CONFIG_LIBS}` -lutil
 
 # header directory
 CPPFLAGS += -Iemulator -Iterminal -Irenderer -isystem renderer/system
 
 # default compilation options
-CPPFLAGS += -fdiagnostics-color=auto -pipe -std=c++1y -DVERSION=${VERSION} -DDATADIR=\"../data\" -fPIC -MMD -MP
+CPPFLAGS += -fdiagnostics-color=auto -pipe -std=c++1y -DVERSION=\"${VERSION}\" -DDATADIR=\"../data\" -fPIC -MMD -MP
 
 # add debugging
 ifeq (${DEBUG},1)
   CPPFLAGS += -g3 -ggdb -DDEBUG
-endif
-
-# add optimization
-ifeq (${OPTIMIZE},1)
-  CPPFLAGS += -Ofast -fomit-frame-pointer -ffast-math -mfpmath=sse -fPIC -msse -msse2 -msse3 -mssse3 -msse4
 endif
 
 # add warnings
@@ -53,12 +55,18 @@ ifeq (${WARNINGS},1)
       -Wunknown-pragmas  -Wunreachable-code -Wunused -Wunused-function  -Wunused-label \
       -Wunused-parameter -Wunused-value  -Wunused-variable  -Wvariadic-macros \
       -Wvolatile-register-var  -Wwrite-strings -Wfatal-errors -Winvalid-pch -Weffc++ \
-      -Wold-style-cast -Wsign-promo -Winline -Wswitch-enum -Wmissing-declarations -Wfatal-errors
+      -Wold-style-cast -Wsign-promo -Wswitch-enum -Wmissing-declarations -Wfatal-errors
   ifeq (${CXX},g++)
     CXXFLAGS += -Wunsafe-loop-optimizations -Wzero-as-null-pointer-constant -Wuseless-cast
   endif
 endif
 CXXFLAGS += -Wno-narrowing
+
+# add optimization
+ifneq (${NO_OPT},1)
+  CPPFLAGS += -Ofast -fomit-frame-pointer -ffast-math -mfpmath=sse -fPIC -msse -msse2 -msse3 -mssse3 -msse4
+  CPPFLAGS += -Wno-inline
+endif
 
 # debug Makefile
 Q := @
@@ -70,8 +78,6 @@ endif
 #
 # constants
 #
-
-VERSION='0.0.1'
 
 red =\033[0;31m
 green =\033[0;32m
@@ -87,7 +93,7 @@ SUPPRESSIONS=xcb.supp
 # print Makefile information
 
 $(info DEBUG    = $(if ${DEBUG},yes,no))
-$(info OPTIMIZE = $(if ${OPTIMIZE},yes,no))
+$(info NO_OPT   = $(if ${NO_OPT},yes,no))
 $(info WARNINGS = $(if ${WARNINGS},yes,no))
 $(info CXX      = ${CXX})
 $(info LDLFLAGS = ${LDFLAGS})
@@ -112,14 +118,15 @@ endif
 # rules
 #
 
-perminal: ${OBJ}
+perminal: checklibs ${OBJ}
 ifneq (${DEBUG_MAKE},1)	
 	@echo -e '${green}${CXX} -o $@${done}'
 endif
-	${Q} ${CXX} -o $@ $^ ${EXTRA_LIBS} ${CPPFLAGS} ${CXXFLAGS} ${LDFLAGS}
+	${Q} ${CXX} -o $@ $(filter-out $<,$^) ${EXTRA_LIBS} ${CPPFLAGS} ${CXXFLAGS} ${LDFLAGS}
 
 
-test: ./perminal
+test:
+	${MAKE} DEBUG=1 NO_OPT=1 WARNINGS=1
 	./perminal
 
 #
@@ -154,11 +161,33 @@ lint:
 help:
 	@echo 'Variables that will influence this make:'
 	@echo '  CXX          choose a different compiler'
-	@echo '  OPTIMIZE     turn on all optimizations'
+	@echo '  NO_OPT       turn off all optimizations'
 	@echo '  WARNINGS     turn on all warnings'
 	@echo '  DEBUG        create debug symbols'
 	@echo '  DEBUG_MAKE   debug this Makefile'
 
-.PHONY: all clean help checkleaks lint gensuppressions
+install: perminal
+	@echo INSTALL perminal
+	@install perminal ${PREFIX}/bin
+
+uninstall: perminal
+	@echo RM perminal
+	@rm -f ${PREFIX}/bin/perminal
+	
+dist:
+	${MAKE} clean
+	mkdir perminal-${VERSION}
+	cp -R GNUmakefile README INSTALL TODO main.cc perminal-${VERSION}
+	cp -R emulator terminal renderer perminal-${VERSION}
+	tar cvf perminal-${VERSION}.tar.gz perminal-${VERSION}
+	rm -rf perminal-${VERSION}
+
+checklibs:
+	@for lib in ${PKG_CONFIG_LIBS}; do \
+	  pkg-config $$lib && ([ $$? -eq 0 ]) || { echo -e "${red}Library '$$lib' was not found by pkg-config. This library is required for building 'perminal'.${done}"; exit 1; } \
+	done
+	@#echo -e "${green}Required libraries installed.${done}"
+
+.PHONY: all clean help checkleaks lint gensuppressions install uninstall dist checklibs
 
 -include ${SRC:.cc=.d}

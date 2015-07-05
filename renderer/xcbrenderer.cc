@@ -1,6 +1,7 @@
 #include "xcbrenderer.h"
 
 #include <xcb/xcb.h>
+#include <xcb/xcb_atom.h>
 
 #include <cassert>
 #include <cstring>
@@ -59,6 +60,15 @@ XcbRenderer::XcbRenderer(Matrix const& matrix, Font const& font)
             XCB_WINDOW_CLASS_INPUT_OUTPUT,              // class
             screen->root_visual,                        // visual
             mask, values);                              // masks
+
+    // set window title
+    const char* wname = "perminal (version " VERSION ")";
+    xcb_change_property(c, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8,
+            strlen(wname), wname);
+    xcb_change_property(c, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_ICON_NAME, XCB_ATOM_STRING, 8,
+            strlen(wname), wname);
+
+    // map window
     xcb_map_window(c, window);
     xcb_flush(c);
 

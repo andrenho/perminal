@@ -1,0 +1,6 @@
+`perminal` aims to be a very fast, small, highly compliant and highly
+configurable terminal emulator for various operating systems, with multiple
+front-ends and multiple-backends.
+
+Right now, it is niether of these things. This is a very alpha release, so DO
+NOT USE IN PRODUCTION ENVIRONMENTS.

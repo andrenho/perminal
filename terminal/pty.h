@@ -18,6 +18,8 @@ public:
     int Read(uint8_t* data, int max_sz) const;
 
 private:
+    void PrintMOTD() const;
+
     int fd = 0;
 };
 

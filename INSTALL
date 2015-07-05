@@ -1,0 +1,11 @@
+`perminal` requires the following libraries:
+
+ * xcb <http://xcb.freedesktop.org/> - for communicating with X11
+ * xkbcommon <http://xcb.freedesktop.org/> - for dealing with international keyboards
+
+To install, simply type:
+
+  $ make
+  # make install
+
+There's no configure script.

@@ -5,18 +5,29 @@
 - encodings in bitmap font (ok)
 - Terminal/PTY (ok)
    + matrix PTY commands (ok)
-- make install
+- Close version
+   - make install (ok)
+   - README/INSTALL and other basic files (ok)
+   - dist (ok)
+   - check for libraries (ok)
+   - OPTIMIZE by default (no warnings) (ok)
+   - window name (ok)
+   - initialize shell correctly (ok)
+   - resize
+   - keys (?)
 - my tic
 - xterm-256color
 - resize
 - config file
 - check libraries in Makefile
 
+- tests
 - mouse support
 - color support
 - x11 font support
 - fontconfig
 - full UTF-8 bitmaps (http://people.mpi-inf.mpg.de/~uwe/misc/uw-ttyp0/) - give credit!
+- multilanguage
 
 Future options:
   - show partial COMPOSING accent
