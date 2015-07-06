@@ -6,6 +6,7 @@
 using namespace std;
 
 #include "userevent.h"
+#include "capabilities.h"
 #include "commands.h"
 #include "matrix.h"
 #include "charencoding.h"

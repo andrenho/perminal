@@ -6,7 +6,7 @@
 #include "debug.h"
 
 Terminal::Terminal(unique_ptr<Capabilities> cap)
-    : ce("utf-8", "latin1"), cap(cap)
+    : ce("utf-8", "latin1"), cap(move(cap))
 {
 }
 

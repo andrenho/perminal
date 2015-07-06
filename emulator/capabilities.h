@@ -1,7 +1,7 @@
 #ifndef CAPABILITIES_H
 #define CAPABILITIES_H
 
-class Capabilites {
+class Capabilities {
 };
 
 #endif
