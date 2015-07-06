@@ -1,18 +1,18 @@
-#include "dumbterminal.h"
+#include "terminal.h"
 
 #include <cassert>
 #include <cstring>
 
 #include "debug.h"
 
-DumbTerminal::DumbTerminal()
-    : ce("utf-8", "latin1")
+Terminal::Terminal(unique_ptr<Capabilities> cap)
+    : ce("utf-8", "latin1"), cap(cap)
 {
 }
 
 
 int 
-DumbTerminal::ParseUserEvent(UserEvent const& event, uint8_t* data) const
+Terminal::ParseUserEvent(UserEvent const& event, uint8_t* data) const
 {
     if(event.type == KEYPRESS) {
         int n = strlen(reinterpret_cast<const char*>(event.chr));
@@ -27,7 +27,7 @@ DumbTerminal::ParseUserEvent(UserEvent const& event, uint8_t* data) const
 
 
 Command 
-DumbTerminal::ParsePluginOutput(uint8_t c, uint32_t pars[256]) const
+Terminal::ParsePluginOutput(uint8_t c, uint32_t pars[256]) const
 {
     // rotate buffer
     assert(buf_size < 4);  // TODO

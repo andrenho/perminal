@@ -13,12 +13,12 @@ SRC=main.cc 			\
     emulator/debug.cc		\
     emulator/charencoding.cc	\
     emulator/matrix.cc		\
-    emulator/dumbterminal.cc	\
-    terminal/pty.cc		\
-    renderer/xcbrenderer.cc	\
-    renderer/xkb_keyboard.cc	\
-    renderer/font.cc		\
-    renderer/bitmapfont.cc
+    emulator/terminal.cc	\
+    backend/pty.cc		\
+    frontend/xcbrenderer.cc	\
+    frontend/xkb_keyboard.cc	\
+    frontend/font.cc		\
+    frontend/bitmapfont.cc
 
 #
 # compilation options
@@ -32,7 +32,7 @@ CPPFLAGS += `pkg-config --cflags ${PKG_CONFIG_LIBS}`
 LDFLAGS += `pkg-config --libs ${PKG_CONFIG_LIBS}` -lutil
 
 # header directory
-CPPFLAGS += -Iemulator -Iterminal -Irenderer -isystem renderer/system
+CPPFLAGS += -Iemulator -Ibackend -Ifrontend -isystem frontend/system
 
 # default compilation options
 CPPFLAGS += -fdiagnostics-color=auto -pipe -std=c++1y -DVERSION=\"${VERSION}\" -DDATADIR=\"../data\" -fPIC -MMD -MP
@@ -116,12 +116,12 @@ endif
 # 
 # compile font image
 #
-main.cc: renderer/latin1.xbm
+main.cc: frontend/latin1.xbm
 
-renderer/latin1.xbm: renderer/latin1.png
+frontend/latin1.xbm: frontend/latin1.png
 	@echo CONVERT $@
 	@convert $< $@
-	@sed -i 's/static char/static unsigned char/g' renderer/latin1.xbm
+	@sed -i 's/static char/static unsigned char/g' frontend/latin1.xbm
 
 #
 # rules
@@ -187,7 +187,7 @@ dist:
 	${MAKE} clean
 	mkdir perminal-${VERSION}
 	cp -R GNUmakefile README INSTALL TODO main.cc perminal-${VERSION}
-	cp -R emulator terminal renderer perminal-${VERSION}
+	cp -R emulator backend frontend perminal-${VERSION}
 	tar cjvf perminal-${VERSION}.tar.bz2 perminal-${VERSION}
 	rm -rf perminal-${VERSION}
 

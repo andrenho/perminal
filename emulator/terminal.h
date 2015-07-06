@@ -1,5 +1,5 @@
-#ifndef DUMBTERMINAL_H
-#define DUMBTERMINAL_H
+#ifndef TERMINAL_H
+#define TERMINAL_H
 
 #include <cstdint>
 #include <vector>
@@ -10,11 +10,10 @@ using namespace std;
 #include "matrix.h"
 #include "charencoding.h"
 
-
-class DumbTerminal {
+class Terminal {
 public:
-    DumbTerminal();
-    virtual ~DumbTerminal() {}
+    Terminal(unique_ptr<Capabilities> cap=nullptr);
+    virtual ~Terminal() {}
 
     virtual int ParseUserEvent(UserEvent const& event, uint8_t* data) const;
     virtual Command ParsePluginOutput(uint8_t c, uint32_t pars[256]) const;
@@ -24,6 +23,7 @@ public:
 private:
     mutable char buf[4];
     mutable int  buf_size = 0;
+    unique_ptr<Capabilities> cap = nullptr;
     CharEncoding ce;
 };
 

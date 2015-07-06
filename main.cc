@@ -11,7 +11,7 @@ using namespace std;
 #include "config.h"
 #include "commands.h"
 #include "plugin.h"
-#include "dumbterminal.h"
+#include "terminal.h"
 #include "font.h"
 #include "renderer.h"
 #include "userevent.h"
@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 
     try {
 
-        const DumbTerminal terminal;
+        const Terminal terminal;
 
         const PTY pty(terminal.TERM());
         Matrix matrix(80, 25);
