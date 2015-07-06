@@ -9,10 +9,10 @@ PKG_CONFIG_LIBS = xcb xcb-xkb xcb-atom xkbcommon xkbcommon-x11
 # 
 
 SRC=main.cc 			\
+    emulator/capabilities.cc	\
     emulator/cursor.cc		\
     emulator/charencoding.cc	\
     emulator/debug.cc		\
-    emulator/dumb.cc		\
     emulator/matrix.cc		\
     emulator/terminal.cc	\
     backend/pty.cc		\

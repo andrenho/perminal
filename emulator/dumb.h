@@ -5,7 +5,13 @@
 
 class Dumb : public Capabilities {
 public:
-    Dumb() {}
+    Dumb() : Capabilities({}, {}) {}
+
+    const string TERM() const override { return "dumb"; }
+
+private:
+    char EnterCapModeChar() const override { return 0; }
+    int MaxCapSize() const override { return 0; }
 };
 
 #endif

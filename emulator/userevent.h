@@ -1,33 +1,40 @@
 #ifndef USEREVENT_H
 #define USEREVENT_H
 
-enum UserEventType { NOTHING, RESIZE, KEYPRESS }; 
+#include <cstdint>
+
+enum UserEventType : uint8_t { NOTHING, RESIZE, KEYPRESS }; 
+
+enum SpecialKey {
+    NO_KEY,
+    UP, DOWN, LEFT, RIGHT,
+};
 
 struct UserEvent {
     UserEventType type;
     union {
         uint8_t chr[5] = { 0, 0, 0, 0, 0 };
         uint16_t size[2];
+        SpecialKey key;
     };
 
     explicit UserEvent(UserEventType type) : type(type) {}
-    UserEvent(UserEventType type, uint8_t c[5]) : type(type) {
-        chr[0] = c[0];
-        chr[1] = c[1];
-        chr[2] = c[2];
-        chr[3] = c[3];
-        chr[4] = c[4];
+    UserEvent(UserEventType type, uint8_t c[5]) : type(type), chr { c[0], c[1], c[2], c[3], c[4] } {}
+    UserEvent(UserEventType type, char c[5]) : type(type), chr { c[0], c[1], c[2], c[3], c[4] } {}
+    UserEvent(UserEventType type, uint16_t w, uint16_t h) : type(type), size { w, h } {}
+    UserEvent(UserEventType type, SpecialKey key) : type(type), key(key) { }
+
+    inline uint64_t hash() const {
+        return (static_cast<uint64_t>(type) << 40) + 
+            (static_cast<uint64_t>(chr[4]) << 32) + 
+            (static_cast<uint64_t>(chr[3]) << 24) + 
+            (static_cast<uint64_t>(chr[2]) << 16) + 
+            (static_cast<uint64_t>(chr[1]) << 8) + 
+            static_cast<uint64_t>(chr[0]);
     }
-    UserEvent(UserEventType type, char c[5]) : type(type) {
-        chr[0] = c[0];
-        chr[1] = c[1];
-        chr[2] = c[2];
-        chr[3] = c[3];
-        chr[4] = c[4];
-    }
-    UserEvent(UserEventType type, uint16_t w, uint16_t h) : type(type) {
-        size[0] = w;
-        size[1] = h;
+
+    inline bool operator<(UserEvent const& other) const { 
+        return this->hash() < other.hash();
     }
 };
 
