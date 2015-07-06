@@ -168,7 +168,6 @@ Matrix::Resize(int nw, int nh)
             for(int x=0; x<w; ++x) {
                 line->push_back(EmptyCell());
                 dirty.push_back(P{x,y});
-                dirty_empty_screen.push_back(P{x,y});
             }
             cells.push_back(move(line));
         }
@@ -191,6 +190,14 @@ Matrix::Resize(int nw, int nh)
         ASSERT(cells[y]->size() == static_cast<size_t>(nw));
     }
     w = nw;
+
+    // rebuild dirty_empty_screen
+    dirty_empty_screen.clear();
+    for(int y=0; y<h; ++y) {
+        for(int x=0; x<w; ++x) {
+            dirty_empty_screen.push_back(P{x,y});
+        }
+    }
 }
 
 
