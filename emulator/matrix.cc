@@ -39,12 +39,23 @@ Matrix::Do(Command const& cmd, const uint32_t pars[256])
                 break;
             }
 
+        // this is called when the terminal started to parse a command, only to find out
+        // later that it was not a command after all
+        case UNWIND: {
+            for(int i=0; i<256; ++i) {
+                if(!pars[i]) { break; }
+                char c[4] = { pars[i], 0, 0, 0 };
+                PrintChar(c);
+            }
+            break;
+        }
+
         case TAB:               if(cursor.x < (w-8)) { AdvanceX(8 - (cursor.x % 8)); } break;
 
         // local cursor movement
         case CARRIAGE_RETURN:   MoveCursor(0, cursor.y); break;
         case CURSOR_UP:         if(cursor.y > 0) { AdvanceY(-1); } break;
-        case CURSOR_DOWN:       if(cursor.y < (h-1)) { AdvanceY(1); } break;
+        case CURSOR_DOWN:       AdvanceY(1); break;
         case CURSOR_LEFT:       if(cursor.x > 0) { AdvanceX(-1); } break;
         case CURSOR_RIGHT:      if(cursor.x < (w-1)) { AdvanceX(1); } break;
 

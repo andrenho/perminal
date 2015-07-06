@@ -18,9 +18,11 @@ Debug::Info(const char* fmt, ...) const
 
 
 void 
-Debug::InfoCharacter(char c, bool complete) const
+Debug::InfoCharacter(char c, bool complete, bool cap) const
 {
+    if(cap) { fprintf(stderr, "\e[7m"); }
     fprintf(stderr, "[%3d '%c'%c ", static_cast<unsigned char>(c), c >= 32 && c < 127 ? c : '#', complete ? ']' : '>');
+    if(cap) { fprintf(stderr, "\e[27m"); }
 }
 
 

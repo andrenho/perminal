@@ -33,18 +33,27 @@ Capabilities::ParseCapability(char c, uint32_t pars[256]) const
     if(!cap_mode) {
         if(c != 0 and c == EnterCapModeChar()) {
             cap_mode = true;
+            current_cap.str("");
         } 
     }
 
     if(cap_mode) { 
+        C(c, true, true);
+
         current_cap.put(c);
 
         // check sanity
         if(current_cap.str().length() > MaxCapSize()) {
-            D("Capability descriptor too long -- giving up: %s", current_cap.str().c_str());  // TODO - improve message
+            D("Capability descriptor too long -- giving up");
+            int i=0;
+            for(char const& c: current_cap.str()) {
+                //C(c, true, true);
+                pars[i++] = c;
+            }
+            pars[i] = 0;
             cap_mode = false;
-            current_cap.clear();
-            return NONE;
+            current_cap.str("");
+            return UNWIND;
         }
 
         // verify if capability matches
@@ -53,7 +62,7 @@ Capabilities::ParseCapability(char c, uint32_t pars[256]) const
         auto it = capabilities.find(cap);
         if(it != capabilities.end()) {
             cap_mode = false;
-            current_cap.clear();
+            current_cap.str("");
             memcpy(pars, p, 256 * sizeof(uint32_t));
             return it->second;
         }

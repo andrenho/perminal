@@ -44,7 +44,6 @@ Terminal::ParsePluginOutput(uint8_t c, uint32_t pars[256]) const
     assert(buf_size < 4);  // TODO
     buf[buf_size++] = c;
     if(ce.IsComplete(buf, buf_size)) {
-        C(c, true);
 
         // first, send key to cap
         if(c < 128) {
@@ -56,6 +55,7 @@ Terminal::ParsePluginOutput(uint8_t c, uint32_t pars[256]) const
         }
 
         // second, do a simple parse
+        C(c, true);
         switch(buf[0]) {
             case 7:
                 buf_size = 0; return BELL;

@@ -5,6 +5,7 @@ enum Command {
     NONE,
     IGNORE,
     REGULAR_INPUT,
+    UNWIND,  // called when it was not a command after all
 
     TAB,  // TODO - ?
 

@@ -12,7 +12,7 @@ public:
     //void Info(string const& s) { Info("%s", s.c_str()); }
     void Info(const char* fmt, ...) const __attribute__ ((format (printf, 2, 3)));
 
-    void InfoCharacter(char c, bool complete=true) const;
+    void InfoCharacter(char c, bool complete=true, bool cap=false) const;
 
     void Assert(bool validation) const;
     void Assert(function<bool()> v_func) const;
