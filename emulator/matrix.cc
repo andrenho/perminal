@@ -38,11 +38,21 @@ Matrix::Do(Command const& cmd, const uint32_t pars[256])
                 PrintChar(p);
                 break;
             }
-        case BACKSPACE:         if(cursor.x > 0) { AdvanceX(-1); } break;
+
         case TAB:               if(cursor.x < (w-8)) { AdvanceX(8 - (cursor.x % 8)); } break;
-        case LINE_FEED:         AdvanceY(1); break;
+
+        // local cursor movement
         case CARRIAGE_RETURN:   MoveCursor(0, cursor.y); break;
+        case CURSOR_UP:         if(cursor.y > 0) { AdvanceY(-1); } break;
+        case CURSOR_DOWN:       if(cursor.y < (h-1)) { AdvanceY(1); } break;
+        case CURSOR_LEFT:       if(cursor.x > 0) { AdvanceX(-1); } break;
+        case CURSOR_RIGHT:      if(cursor.x < (w-1)) { AdvanceX(1); } break;
+
+        // classify (TODO)
         case BELL:              /* TODO */ printf("\a"); fflush(stdout); break;
+        case CLEAR_EOL:         for(int x=cursor.x; x<w; ++x) { cells[cursor.y]->operator[](x) = EmptyCell(); } break;
+
+        case IGNORE: abort(); // we shouldn't get here
         default: 
             abort();
     }

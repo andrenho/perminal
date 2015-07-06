@@ -15,7 +15,7 @@ using namespace std;
 
 class Capabilities {
 public:
-    Capabilities(map<UserEvent, vector<uint8_t>> const& user_events, map<string, Command> const& capabilities);
+    Capabilities(map<UserEvent, string> const& user_events, map<string, Command> const& capabilities);
     virtual ~Capabilities() {}
     
     virtual int ParseUserEvent(UserEvent const& event, uint8_t* data) const;
@@ -28,7 +28,7 @@ protected:
     virtual int MaxCapSize() const = 0;
     string ParseCap(string const& cap, uint32_t pars[256]) const;
 
-    map<UserEvent, vector<uint8_t>> user_events;
+    map<UserEvent, string> user_events;
     map<string, Command> capabilities;
 
     mutable bool cap_mode = false;

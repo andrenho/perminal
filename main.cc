@@ -21,7 +21,7 @@ using namespace std;
 #include "pty.h"
 #include "bitmapfont.h"
 #include "xcbrenderer.h"
-#include "dumb.h"
+#include "perminal256.h"
 
 #include "latin1.xbm"  // default font
 
@@ -36,8 +36,8 @@ int main(int argc, char** argv)
 
     try {
 
-        const Dumb dumb;
-        const Terminal terminal(dumb);
+        const Perminal256 perminal256;
+        const Terminal terminal(perminal256);
 
         const PTY pty(terminal.TERM());
         Matrix matrix(80, 25);

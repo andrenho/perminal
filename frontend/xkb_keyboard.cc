@@ -142,7 +142,7 @@ XkbKeyboard::SetupEventsFilter(struct xcb_connection_t *c)
 }
 
 
-void 
+SpecialKey
 XkbKeyboard::ParseKeyPress(xcb_key_press_event_t* ev, char chr[5]) const {
     // debugging info
     auto compose_status = [&](){
@@ -191,6 +191,18 @@ XkbKeyboard::ParseKeyPress(xcb_key_press_event_t* ev, char chr[5]) const {
 
     D("   new compose status:      %s", compose_status());
     D("----------------");
+
+    // check for special keys
+    if(status == XKB_COMPOSE_NOTHING || status == XKB_COMPOSE_CANCELLED) {
+        switch(keysym) {
+            case XKB_KEY_Up:    return UP;
+            case XKB_KEY_Down:  return DOWN;
+            case XKB_KEY_Left:  return LEFT;
+            case XKB_KEY_Right: return RIGHT;
+        }
+    }
+
+    return REGULAR_KEY;
 }
 
 

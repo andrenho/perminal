@@ -18,19 +18,21 @@ Terminal::ParseUserEvent(UserEvent const& event, uint8_t* data) const
     int n = 0;
 
     if((n = cap.ParseUserEvent(event, data)) == 0) {   // parse from capability
+        
         // capability not found, do a simple parse
-        if(event.type == KEYPRESS) {
+        if(event.type == KEYPRESS_CH) {
             n = strlen(reinterpret_cast<const char*>(event.chr));  // get UTF-8 from key pressed
+        }
+
+        // fill out `data` with the bytes that will be sent back to the plugin
+        if(n > 0) {
+            assert(n<4);
+            for(int i=0; i<n; ++i) {
+                data[i] = event.chr[i];
+            }
         }
     }
 
-    // fill out `data` with the bytes that will be sent back to the plugin
-    if(n > 0) {
-        assert(n<4);
-        for(int i=0; i<n; ++i) {
-            data[i] = event.chr[i];
-        }
-    }
     return n;
 }
 
@@ -47,7 +49,7 @@ Terminal::ParsePluginOutput(uint8_t c, uint32_t pars[256]) const
         // first, send key to cap
         if(c < 128) {
             Command cmd = cap.ParseCapability(static_cast<char>(c), pars);
-            if(cmd != NONE) {
+            if(cmd != IGNORE) {
                 buf_size = 0;
                 return cmd;
             }
@@ -58,11 +60,11 @@ Terminal::ParsePluginOutput(uint8_t c, uint32_t pars[256]) const
             case 7:
                 buf_size = 0; return BELL;
             case 8:
-                buf_size = 0; return BACKSPACE;
+                buf_size = 0; return CURSOR_LEFT;
             case 9:
                 buf_size = 0; return TAB;
             case 10:
-                buf_size = 0; return LINE_FEED;
+                buf_size = 0; return CURSOR_DOWN;
             case 13:
                 buf_size = 0; return CARRIAGE_RETURN;
             default:

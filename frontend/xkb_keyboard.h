@@ -4,12 +4,14 @@
 #include <cstdint>
 #include <xcb/xcb.h>
 
+#include "userevent.h"
+
 class XkbKeyboard {
 public:
     explicit XkbKeyboard(struct xcb_connection_t *c);
     ~XkbKeyboard();
 
-    void ParseKeyPress(struct xcb_key_press_event_t* ev, char chr[5]) const;
+    SpecialKey ParseKeyPress(struct xcb_key_press_event_t* ev, char chr[5]) const;
     void ParseGenericEvent(xcb_generic_event_t* ev) const;
 
 private:

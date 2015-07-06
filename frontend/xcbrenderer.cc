@@ -144,9 +144,11 @@ XcbRenderer::GetEvent() const
     }
     case XCB_KEY_PRESS: {
         char chr[5] = { 0, 0, 0, 0, 0 };
-        keyboard.ParseKeyPress(reinterpret_cast<xcb_key_press_event_t*>(e), chr);
-        if(chr[0] != 0) {
-            ev = UserEvent(KEYPRESS, chr);
+        SpecialKey key = keyboard.ParseKeyPress(reinterpret_cast<xcb_key_press_event_t*>(e), chr);
+        if(key != REGULAR_KEY) {
+            ev = UserEvent(KEYPRESS_SP, key);
+        } else if(chr[0] != 0) {
+            ev = UserEvent(KEYPRESS_CH, chr);
         }
         break;
     }
