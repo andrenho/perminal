@@ -4,6 +4,8 @@
 #include "capabilities.h"
 
 class Dumb : public Capabilities {
+public:
+    Dumb() {}
 };
 
 #endif

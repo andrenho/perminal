@@ -6,14 +6,15 @@
 using namespace std;
 
 #include "userevent.h"
-#include "capabilities.h"
 #include "commands.h"
 #include "matrix.h"
 #include "charencoding.h"
 
+class Capabilities;
+
 class Terminal {
 public:
-    Terminal(unique_ptr<Capabilities> cap=nullptr);
+    explicit Terminal(Capabilities const& cap);
     virtual ~Terminal() {}
 
     virtual int ParseUserEvent(UserEvent const& event, uint8_t* data) const;
@@ -24,7 +25,7 @@ public:
 private:
     mutable char buf[4];
     mutable int  buf_size = 0;
-    unique_ptr<Capabilities> cap = nullptr;
+    Capabilities const& cap;
     CharEncoding ce;
 };
 

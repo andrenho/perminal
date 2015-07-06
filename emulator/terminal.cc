@@ -3,10 +3,11 @@
 #include <cassert>
 #include <cstring>
 
+#include "capabilities.h"
 #include "debug.h"
 
-Terminal::Terminal(unique_ptr<Capabilities> cap)
-    : ce("utf-8", "latin1"), cap(move(cap))
+Terminal::Terminal(Capabilities const& cap)
+    : cap(cap), ce("utf-8", "latin1")
 {
 }
 

@@ -11,7 +11,7 @@ using namespace std;
 
 class PTY : public Plugin {
 public:
-    PTY(string const& term);
+    explicit PTY(string const& term);
     ~PTY();
 
     void Write(const uint8_t* data, int n) const;

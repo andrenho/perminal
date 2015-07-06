@@ -36,8 +36,8 @@ int main(int argc, char** argv)
 
     try {
 
-        unique_ptr<Dumb> dumb;
-        const Terminal terminal(move(dumb));
+        const Dumb dumb;
+        const Terminal terminal(dumb);
 
         const PTY pty(terminal.TERM());
         Matrix matrix(80, 25);
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
 
         uint8_t* buffer = new uint8_t[config.BufferSize];
         uint32_t pars[256];
-        uint32_t u = 0;
+
         while(renderer.Running()) {
 
             // get user input
@@ -84,8 +84,6 @@ int main(int argc, char** argv)
             if(m == 0) {  // sleep only if there was no input
                 this_thread::sleep_for(chrono::milliseconds(config.RenderUpdateMilliseconds));
             }
-
-            ++u;
         }
         delete[] buffer;
 
