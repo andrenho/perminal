@@ -58,6 +58,7 @@ Matrix::Do(Command const& cmd, const uint32_t pars[256])
         case CURSOR_DOWN:       AdvanceY(1); break;
         case CURSOR_LEFT:       if(cursor.x > 0) { AdvanceX(-1); } break;
         case CURSOR_RIGHT:      if(cursor.x < (w-1)) { AdvanceX(1); } break;
+        case CURSOR_HOME:       cursor.x = cursor.y = 0; break;
 
         // classify (TODO)
         case BELL:              /* TODO */ printf("\a"); fflush(stdout); break;

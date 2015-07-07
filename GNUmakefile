@@ -133,8 +133,8 @@ ifneq (${DEBUG_MAKE},1)
 	@echo -e '${green}${CXX} -o $@${done}'
 endif
 	${Q} ${CXX} -o $@ $(filter-out $<,$^) ${EXTRA_LIBS} ${CPPFLAGS} ${CXXFLAGS} ${LDFLAGS}
-	@echo TIC perminal-256color.info
-	@tic backend/perminal-256color.info
+	@echo TIC perminal.info
+	@tic backend/perminal.info
 
 
 test:
@@ -180,8 +180,8 @@ help:
 	@echo '  DEBUG_MAKE   debug this Makefile'
 
 install: perminal
-	@echo TIC perminal-256color.info
-	@tic backend/perminal-256color.info
+	@echo TIC perminal.info
+	@tic backend/perminal.info
 	@echo INSTALL perminal
 	@install perminal ${PREFIX}/bin
 
