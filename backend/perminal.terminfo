@@ -1,0 +1,146 @@
+perminal|256 color perminal,
+#
+# list of capabilities used by `vi`
+#
+
+# 
+# SCREEN DIMENSIONS AND CURSOR MOVEMENT
+#
+
+# screen dimensions
+	cols#80,
+	lines#25,
+
+# local cursor movement
+	cuu1=\E@cuu1|,
+	cud1=^J,
+	cub1=^H,
+	cuf1=\E@cuf1|,
+	home=\E@home|,
+	ll=\E@ll|,
+	cr=^M,
+
+# parameterized local cursor movement
+	cuu=\E@cuu;%p1%d|,
+	cud=\E@cud;%p1%d|,
+	cub=\E@cub;%p1%d|,
+	cuf=\E@cuf;%p1%d|,
+
+# absolute cursor movement (TODO mrcup, hpa, vpa, sc, rc)
+	cup=\E@cup;%i%p1%d;%p2%d|,
+
+# scrolling (TODO indn, rin)
+	ind=^J,
+	ri=\E@ri|,
+	csr=\E@csr;%i%p1%d;%p2%d|,
+
+# miscellaneous local movements (TODO nel, hu, hd)
+
+# status lines (TODO hs, tsl, fsl, dsl, eslok, wsl)
+
+#
+# EDITTING THE SCREEN
+#
+
+# adding to the screen (TODO rep)
+	il1=\E@il1|,
+	il=\E@il;%p1%d|,
+
+# deleting from the screen (TODO el1, dch, ech)
+	clear=\E@clear|,
+	ed=\E@ed|,
+	el=\E@el|,
+	dl1=\E@dl1|,
+	dl=\E@dli;%p1%d|,
+	dch1=\E@dch1|,
+	smdc=\E@smdc|,
+	rmdc=\E@rmdc|,
+
+# insert mode (TODO ich)
+	smir=\E@smir|,
+	rmir=\E@rmir|,
+	ich1=\E@ich1|,
+	mir,
+
+# 
+# INITIALIZATION AND RESET
+#
+
+# initialization and reset (TODO iP, is1, is2, is3, if, rs1, rs2, rs3, rf)
+
+# program initialization
+	rmcup=\E@rmcup|,
+	smcup=\E@smcup|,
+
+# setting and using tabs (TODO hts, tbc, it#, cbt)
+	ht=^I,
+
+# margins (TODO smgl, smgr, smam, rmam)
+
+# 
+# SPECIAL EFFECTS
+#
+
+# standout mode
+	smso=\E@smso|,
+	rmso=\E@rmso|,
+
+# underlining (TODO smul, rmul, uc)
+
+# misc highlight (TODO rev, blink, bold, dim, invis, prot, smacs, rmacs, enacs, sgr0, sgr)
+
+# bells
+	bel=^G,
+	flash=\E@flash|,
+
+# cursor intensity (TODO civis)
+	cnorm=\E@cnorm|,
+	cvvis=\E@cvvis|,
+
+#
+# SPECIAL KEYS
+#
+
+# function keys (TODO lf?, kn#)
+	kf0=\E@kf0|,
+	kf1=\E@kf1|,
+	kf2=\E@kf2|,
+	kf3=\E@kf3|,
+	kf4=\E@kf4|,
+	kf5=\E@kf5|,
+	kf6=\E@kf6|,
+	kf7=\E@kf7|,
+	kf8=\E@kf8|,
+	kf9=\E@kf9|,
+
+# extended function keys (TODO kf?? [10..63], lf10)
+
+# programmable function keys (TODO pfkey, pfloc, pfx, pln, smln, rmln, nlab#, lw#, lh#)
+
+# keypad keys (TODO k[abc][123])
+	kcuu1=\E@kcuu1|,
+	kcub1=\E@kcub1|,
+	kcuf1=\E@kcuf1|,
+	kcud1=\E@kcud1|,
+	khome=\E@khome|,
+	rmkx=\E@rmkx|,
+	smkx=\E@smkx|,
+
+# other keyboard keys (TODO kll, kbs, ktbc, kctab, kcbt, kclr, kdch1, kdl1, krmir, kel, ked, kich1, kill, knp, kpp, kind, kri, khts)
+
+# extended keys (TODO various...)
+
+# 
+# SPECIAL TERMINALS
+#
+
+# line graphics (TODO acsc)
+
+# meta modes (TODO km, smm, rmm)
+
+# 
+# MISCELANEOUS
+#
+
+# misc
+	am,

@@ -24,20 +24,27 @@ public:
 
 private:
     Command ParseCapability(uint32_t pars[256]) const;
+    string ParseParameters(string const& cmd, uint32_t pars[256]) const;
 
     mutable char buf[4];
     mutable int  buf_size = 0;
     CharEncoding ce;
-    mutable bool cap_on = false;
+    mutable enum { NORMAL, VERIFYING, PERMINAL, OTHER } cap_mode = NORMAL;
     mutable stringstream cap;
 
     map<string, Command> capabilities = {
         // local cursor movement
-        { "@cuf1|", CURSOR_RIGHT },
-        { "@cuu1|", CURSOR_UP },
-        { "@home|", CURSOR_HOME },
+        { "\E@cuf1|", CURSOR_RIGHT },
+        { "\E@cuu1|", CURSOR_UP },
+        { "\E@home|", CURSOR_HOME },
+        { "\E@ll|",   CURSOR_LL },
+        // parameterized local cursor movement
+        { "\E@cud|",   CURSORP_DOWN },
+        { "\E@cuu|",   CURSORP_UP },
+        { "\E@cub|",   CURSORP_LEFT },
+        { "\E@cuf|",   CURSORP_RIGHT },
         // others (TODO)
-        { "@el|", CLEAR_EOL },
+        { "\E@el|",    CLEAR_EOL },
     };
 
     map<UserEvent, string> user_events = {

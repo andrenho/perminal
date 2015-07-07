@@ -9,7 +9,6 @@ PKG_CONFIG_LIBS = xcb xcb-xkb xcb-atom xkbcommon xkbcommon-x11
 # 
 
 SRC=main.cc 			\
-    emulator/capabilities.cc	\
     emulator/cursor.cc		\
     emulator/charencoding.cc	\
     emulator/debug.cc		\
@@ -133,8 +132,8 @@ ifneq (${DEBUG_MAKE},1)
 	@echo -e '${green}${CXX} -o $@${done}'
 endif
 	${Q} ${CXX} -o $@ $(filter-out $<,$^) ${EXTRA_LIBS} ${CPPFLAGS} ${CXXFLAGS} ${LDFLAGS}
-	@echo TIC perminal.info
-	@tic backend/perminal.info
+	@echo TIC perminal.terminfo
+	@tic backend/perminal.terminfo
 
 
 test:
@@ -180,8 +179,8 @@ help:
 	@echo '  DEBUG_MAKE   debug this Makefile'
 
 install: perminal
-	@echo TIC perminal.info
-	@tic backend/perminal.info
+	@echo TIC perminal.terminfo
+	@tic backend/perminal.terminfo
 	@echo INSTALL perminal
 	@install perminal ${PREFIX}/bin
 

@@ -58,7 +58,14 @@ Matrix::Do(Command const& cmd, const uint32_t pars[256])
         case CURSOR_DOWN:       AdvanceY(1); break;
         case CURSOR_LEFT:       if(cursor.x > 0) { AdvanceX(-1); } break;
         case CURSOR_RIGHT:      if(cursor.x < (w-1)) { AdvanceX(1); } break;
-        case CURSOR_HOME:       cursor.x = cursor.y = 0; break;
+        case CURSOR_HOME:       MoveCursor(0, 0); break;
+        case CURSOR_LL:         MoveCursor(w-1, h-1); break;
+        
+        // parameterized local cursor movement
+        case CURSORP_DOWN:      MoveCursor(cursor.x, min(cursor.y + pars[0], static_cast<unsigned>(h-1))); break;
+        case CURSORP_UP:        MoveCursor(cursor.x, max(cursor.y - pars[0], 0u)); break;
+        case CURSORP_LEFT:      MoveCursor(min(cursor.x + pars[0], static_cast<unsigned>(w-1)), cursor.y); break;
+        case CURSORP_RIGHT:     MoveCursor(max(cursor.x - pars[0], 0u), cursor.y); break;
 
         // classify (TODO)
         case BELL:              /* TODO */ printf("\a"); fflush(stdout); break;

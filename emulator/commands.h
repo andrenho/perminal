@@ -16,6 +16,7 @@ enum Command {
     CURSOR_RIGHT,
     CURSOR_UP,
     CURSOR_HOME,
+    CURSOR_LL,
     
     // parameter cursor movement
     CURSORP_DOWN,

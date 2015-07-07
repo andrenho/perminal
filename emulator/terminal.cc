@@ -44,56 +44,79 @@ Terminal::ParseUserEvent(UserEvent const& event, uint8_t* data) const
 Command 
 Terminal::ParsePluginOutput(uint8_t c, uint32_t pars[256]) const
 {
-    if(!cap_on) {
+    switch(cap_mode) {
+        case NORMAL: {
+            // rotate buffer
+            assert(buf_size < 4);  // TODO
+            buf[buf_size++] = c;
+            if(ce.IsComplete(buf, buf_size)) {
 
-        // rotate buffer
-        assert(buf_size < 4);  // TODO
-        buf[buf_size++] = c;
-        if(ce.IsComplete(buf, buf_size)) {
-
-            // second, do a simple parse
-            C(c, true, c == 27);
-            switch(buf[0]) {
-                case 7:
-                    buf_size = 0; return BELL;
-                case 8:
-                    buf_size = 0; return CURSOR_LEFT;
-                case 9:
-                    buf_size = 0; return TAB;
-                case 10:
-                    buf_size = 0; return CURSOR_DOWN;
-                case 13:
-                    buf_size = 0; return CARRIAGE_RETURN;
-                case 27:
-                    buf_size = 0; cap_on = true; cap.str("\e"); return NONE;
-                default:
-                    // copy buffer to parameters
-                    pars[0] = buf[0]; pars[1] = buf[1]; pars[2] = buf[2]; pars[3] = buf[3];
-                    pars[buf_size] = 0;
-                    buf_size = 0;
-                    return REGULAR_INPUT;
+                // second, do a simple parse
+                C(c, true, c == 27);
+                switch(buf[0]) {
+                    case 7:
+                        buf_size = 0; return BELL;
+                    case 8:
+                        buf_size = 0; return CURSOR_LEFT;
+                    case 9:
+                        buf_size = 0; return TAB;
+                    case 10:
+                        buf_size = 0; return CURSOR_DOWN;
+                    case 13:
+                        buf_size = 0; return CARRIAGE_RETURN;
+                    case 27:
+                        buf_size = 0; cap_mode = VERIFYING; cap.put('\e'); return NONE;
+                    default:
+                        // copy buffer to parameters
+                        pars[0] = buf[0]; pars[1] = buf[1]; pars[2] = buf[2]; pars[3] = buf[3];
+                        pars[buf_size] = 0;
+                        buf_size = 0;
+                        return REGULAR_INPUT;
+                }
+            } else {
+                // if we got here, is because this char is just part of a longer UTF-8 sequence
+                C(c, false);
             }
-        } else {
-            // if we got here, is because this char is just part of a longer UTF-8 sequence
-            C(c, false);
-        }
-    
-    } else { // if(cap_on)
-    
-        C(c, true, true);
-        cap.put(c);
-
-        if(c == '|') {
-            Command cmd = ParseCapability(pars);
-            if(cmd != NONE) {
-                cap_on = false;
-                cap.str("");
-            }
-            return cmd;
+            break;
         }
 
+        case VERIFYING:  // check if the second cap char is '@' (perminal) or other (other terminals)
+            C(c, true, true);
+            cap.put(c);
+
+            if(c == '@') {
+                cap_mode = PERMINAL;
+            } else {
+                cap_mode = OTHER;
+            }
+            break;
+
+        case PERMINAL:
+            C(c, true, true);
+            cap.put(c);
+
+            if(c == '|') {
+                Command cmd = ParseCapability(pars);
+                if(cmd != NONE) {
+                    cap_mode = NORMAL;
+                    cap.str("");
+                }
+                return cmd;
+            }
+            break;
+
+        case OTHER:
+            D("Other terminal capabilities not yet supported");  // TODO
+            int i=0;
+            for(char const& c: cap.str()) {
+                pars[i++] = c;
+            }
+            pars[i] = 0;
+            cap_mode = NORMAL;
+            cap.str("");
+            return UNWIND;
     }
-
+    
     return NONE;
 }
 
@@ -101,13 +124,14 @@ Terminal::ParsePluginOutput(uint8_t c, uint32_t pars[256]) const
 Command
 Terminal::ParseCapability(uint32_t pars[256]) const
 {
-    auto it = capabilities.find(cap.str());  // TODO - parse parameters
+    string c = ParseParameters(cap.str(), pars);
+
+    auto it = capabilities.find(c);
     if(it != capabilities.end()) {
         return it->second;
     } else if(cap.str().length() > 20) {   // len(cap) > 20
         int i=0;
         for(char const& c: cap.str()) {
-            //C(c, true, true);
             pars[i++] = c;
         }
         pars[i] = 0;
@@ -115,6 +139,26 @@ Terminal::ParseCapability(uint32_t pars[256]) const
     } else {   // cap not found
         return NONE;
     }
+}
+
+
+string 
+Terminal::ParseParameters(string const& cmd, uint32_t pars[256]) const
+{
+    stringstream test(cmd);
+    string seg;
+    vector<string> lst;
+    while(getline(test, seg, ';')) { lst.push_back(seg); }
+
+    int j = 0;
+    for(size_t i=1; i<lst.size(); ++i) {
+        if(lst[i].back() == '|') {
+            lst[i].pop_back();
+        }
+        pars[j++] = stoul(lst[i]);
+    }
+
+    return lst[0] + (lst.size() > 1 ? "|" : "");
 }
 
 
