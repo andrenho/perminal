@@ -2,6 +2,8 @@
 #define TERMINAL_H
 
 #include <cstdint>
+#include <map>
+#include <sstream>
 #include <vector>
 using namespace std;
 
@@ -10,23 +12,40 @@ using namespace std;
 #include "matrix.h"
 #include "charencoding.h"
 
-class Capabilities;
-
 class Terminal {
 public:
-    explicit Terminal(Capabilities const& cap);
+    Terminal();
     virtual ~Terminal() {}
 
-    virtual int ParseUserEvent(UserEvent const& event, uint8_t* data) const;
-    virtual Command ParsePluginOutput(uint8_t c, uint32_t pars[256]) const;
+    int ParseUserEvent(UserEvent const& event, uint8_t* data) const;
+    Command ParsePluginOutput(uint8_t c, uint32_t pars[256]) const;
 
-    virtual const string TERM() const;
+    const string TERM() const { return "perminal"; }
 
 private:
+    Command ParseCapability(uint32_t pars[256]) const;
+
     mutable char buf[4];
     mutable int  buf_size = 0;
-    Capabilities const& cap;
     CharEncoding ce;
+    mutable bool cap_on = false;
+    mutable stringstream cap;
+
+    map<string, Command> capabilities = {
+        // local cursor movement
+        { "@cuf1|", CURSOR_RIGHT },
+        { "@cuu1|", CURSOR_UP },
+        { "@home|", CURSOR_HOME },
+        // others (TODO)
+        { "@el|", CLEAR_EOL },
+    };
+
+    map<UserEvent, string> user_events = {
+        { UserEvent(KEYPRESS_SP, UP),    "\eOA" },
+        { UserEvent(KEYPRESS_SP, DOWN),  "\eOB" },
+        { UserEvent(KEYPRESS_SP, RIGHT), "\eOC" },
+        { UserEvent(KEYPRESS_SP, LEFT),  "\eOD" },
+    };
 };
 
 #endif

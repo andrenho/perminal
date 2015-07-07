@@ -8,7 +8,6 @@
 #include <vector>
 using namespace std;
 
-#include "capabilities.h"
 #include "config.h"
 #include "commands.h"
 #include "plugin.h"
@@ -21,8 +20,6 @@ using namespace std;
 #include "pty.h"
 #include "bitmapfont.h"
 #include "xcbrenderer.h"
-#include "dumb.h"
-#include "perminal256.h"
 
 #include "latin1.xbm"  // default font
 
@@ -37,9 +34,7 @@ int main(int argc, char** argv)
 
     try {
 
-        const Perminal256 cap;
-        //const Dumb cap;
-        const Terminal terminal(cap);
+        const Terminal terminal;
 
         const PTY pty(terminal.TERM());
         Matrix matrix(80, 25);
