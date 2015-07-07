@@ -55,6 +55,10 @@ private:
     chrono::time_point<chrono::steady_clock> last_blink = chrono::steady_clock::now();
 
     bool blink_on = true;
+
+    struct ScrollRegion {
+        uint16_t top, bottom;
+    } sr;
 };
 
 #endif

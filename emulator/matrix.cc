@@ -6,7 +6,7 @@
 #include "debug.h"
 
 Matrix::Matrix(int w, int h)
-    : cursor(), w(w), h(h), cells(), dirty(), dirty_empty_screen()
+    : cursor(), w(w), h(h), cells(), dirty(), dirty_empty_screen(), sr { 0, h }
 {
     dirty.reserve(w*h);
     dirty_empty_screen.reserve(w*h);
@@ -62,8 +62,8 @@ Matrix::Do(Command const& cmd, const uint32_t pars[256])
         case CURSOR_LL:         MoveCursor(w-1, h-1); break;
         
         // parameterized local cursor movement
-        case CURSORP_DOWN:      MoveCursor(cursor.x, min(cursor.y + pars[0], static_cast<unsigned>(h-1))); break;
-        case CURSORP_UP:        MoveCursor(cursor.x, max(cursor.y - pars[0], 0u)); break;
+        case CURSORP_DOWN:      MoveCursor(cursor.x, min(cursor.y + pars[0], static_cast<unsigned>(sr.bottom+1))); break;
+        case CURSORP_UP:        MoveCursor(cursor.x, max(cursor.y - pars[0], static_cast<unsigned>(sr.top+1))); break;
         case CURSORP_LEFT:      MoveCursor(min(cursor.x + pars[0], static_cast<unsigned>(w-1)), cursor.y); break;
         case CURSORP_RIGHT:     MoveCursor(max(cursor.x - pars[0], 0u), cursor.y); break;
 
@@ -81,6 +81,7 @@ Matrix::Do(Command const& cmd, const uint32_t pars[256])
 void
 Matrix::Update()
 {
+    // TODO - check - this probably doesn't work anymore
     auto time = chrono::steady_clock::now() - last_blink;
     if(time > chrono::milliseconds(config.BlinkSpeed)) {
         blink_on = !blink_on;
@@ -146,11 +147,11 @@ Matrix::AdvanceX(int n)
 void
 Matrix::AdvanceY(int n)
 {
-    int lines_to_scroll = (cursor.y + n) - h + 1;
+    int lines_to_scroll = (cursor.y + n) - sr.bottom + 1;
     if(lines_to_scroll > 0) {
         ScrollLines(lines_to_scroll);
     }
-    MoveCursor(cursor.x, min(cursor.y+n, h-1));
+    MoveCursor(cursor.x, min(cursor.y+n, sr.bottom-1));
 }
 
 
@@ -227,6 +228,8 @@ Matrix::Resize(int nw, int nh)
             dirty_empty_screen.push_back(P{x,y});
         }
     }
+
+    sr = { max(0u, static_cast<unsigned>(sr.top)), min(h, static_cast<int>(sr.bottom)) };
 }
 
 
