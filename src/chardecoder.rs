@@ -1,5 +1,7 @@
+#[derive(Debug)]
 struct CharDecoder;
 
+#[derive(PartialEq, Eq, Debug)]
 enum Conversion {
     Complete(char),
     Incomplete,
@@ -12,7 +14,7 @@ impl CharDecoder {
         CharDecoder
     }
 
-    fn convert(c: char) -> Conversion {
+    fn convert(&self, c: char) -> Conversion {
         Conversion::Invalid
     }
 
@@ -27,9 +29,17 @@ impl Drop for CharDecoder {
 #[cfg(test)]
 mod tests {
 
+    use super::CharDecoder;
+    use super::Conversion;
+
     #[test]
-    fn it_works() {
-        assert!(false)
+    fn single_char() { 
+        assert_eq!(CharDecoder::new("utf-8", "latin1").convert('a'), Conversion::Complete('a')); 
+    }
+
+    #[test]
+    fn utf8_char() { 
+        assert_eq!(CharDecoder::new("utf-8", "latin1").convert('á'), Conversion::Complete(225 as char)); 
     }
 }
 
