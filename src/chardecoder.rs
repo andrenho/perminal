@@ -70,12 +70,7 @@ impl CharDecoder {
             _                    => 4,
         } as size_t;
         let outbytesleft : size_t = 4;
-        let mut from = match c as u32 {
-            0x00000 ... 0x0000ff => vec![((c as u32) & 0xff) as u8],
-            0x00100 ... 0x00ffff => vec![(((c as u32) >> 8) & 0xff) as u8, ((c as u32) & 0xff) as u8],
-            0x10000 ... 0xffffff => vec![(((c as u32) >> 16) & 0xff) as u8, (((c as u32) >> 8) & 0xff) as u8, ((c as u32) & 0xff) as u8],
-            _                    => vec![(((c as u32) >> 24) & 0xff) as u8, (((c as u32) >> 16) & 0xff) as u8, (((c as u32) >> 8) & 0xff) as u8, ((c as u32) & 0xff) as u8],
-        };
+        let mut from = CharDecoder::decompose(c);
         let mut to = vec![0, 0, 0, 0];
         let ret = unsafe{ iconv(self.cd, 
             mem::transmute(&from.as_mut_ptr()), mem::transmute(&inbytesleft),
@@ -96,6 +91,17 @@ impl CharDecoder {
             }
         }
     }
+
+    
+    pub fn decompose(c: char) -> Vec<u8> {
+        match c as u32 {
+            0x00000 ... 0x0000ff => vec![((c as u32) & 0xff) as u8],
+            0x00100 ... 0x00ffff => vec![(((c as u32) >> 8) & 0xff) as u8, ((c as u32) & 0xff) as u8],
+            0x10000 ... 0xffffff => vec![(((c as u32) >> 16) & 0xff) as u8, (((c as u32) >> 8) & 0xff) as u8, ((c as u32) & 0xff) as u8],
+            _                    => vec![(((c as u32) >> 24) & 0xff) as u8, (((c as u32) >> 16) & 0xff) as u8, (((c as u32) >> 8) & 0xff) as u8, ((c as u32) & 0xff) as u8],
+        }
+    }
+
 
 }
 
@@ -142,6 +148,11 @@ mod tests {
         let cd = CharDecoder::new("utf-8", "latin1");
         let chr = 0xc0 as char;
         assert_eq!(cd.convert(chr), Conversion::Invalid);
+    }
+
+    #[test]
+    fn decompose() {
+        assert_eq!(CharDecoder::decompose(char::from_u32((195 << 8) + 161).unwrap()), vec![195, 161]);
     }
 
     // TODO - for tests, use <http://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt>

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use userevent::UserEvent;
 use command::Command;
 
@@ -43,6 +45,7 @@ mod tests {
         assert_eq!(t.parse_user_event(KeyPress('A')), vec!['A' as u8]);
         assert_eq!(t.parse_user_event(KeyPress('á')), vec![195, 161]);
         assert_eq!(t.parse_user_event(SpecialKeyPress(F12)), "@kf12|".as_bytes());
+        // TODO - mouse
     }
 
 
