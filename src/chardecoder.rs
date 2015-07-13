@@ -4,6 +4,7 @@ use std::char;
 use std::io::Error;
 use std::mem;
 use std::ffi::CString;
+use std::cmp;
 
 use self::libc::consts::os::posix88::{E2BIG, EILSEQ, EINVAL};
 use self::libc::{c_char, size_t, c_int, c_void};
@@ -29,7 +30,7 @@ extern "C" {
 //
 #[derive(PartialEq, Eq, Debug)]
 enum Conversion {
-    Ok(char),
+    Ok(Vec<u8>),
     Incomplete,
     Invalid,
 }
@@ -59,19 +60,14 @@ impl CharDecoder {
     }
 
 
-    pub fn convert(&self, c: char) -> Conversion {
+    pub fn convert(&self, c: Vec<u8>) -> Conversion {
 
-        if (c as u32) < 0xbf { return Conversion::Ok(c); }  // skip single-char conversions
+        //if c[0] < 0xbf { return Conversion::Ok(vec![c[0]]); }  // skip single-char conversions
 
-        let inbytesleft = match c as u32 {
-            0x00000 ... 0x0000ff => 1,
-            0x00100 ... 0x00ffff => 2,
-            0x10000 ... 0xffffff => 3,
-            _                    => 4,
-        } as size_t;
+        let inbytesleft = cmp::min(c.len(), 4);
         let outbytesleft : size_t = 4;
-        let mut from = CharDecoder::decompose(c);
-        let mut to = vec![0, 0, 0, 0];
+        let mut from = c.to_owned();
+        let mut to: Vec<u8> = vec![0u8, 0u8, 0u8, 0u8];
         let ret = unsafe{ iconv(self.cd, 
             mem::transmute(&from.as_mut_ptr()), mem::transmute(&inbytesleft),
             mem::transmute(&to.as_mut_ptr()), mem::transmute(&outbytesleft))
@@ -84,25 +80,17 @@ impl CharDecoder {
                 _      => unreachable!(),
             }
         } else {
-            let i: u32 = (to[0] as u32) | ((to[1] as u32) << 8) | ((to[2] as u32) << 16) | ((to[3] as u32) << 24);
-            match char::from_u32(i) {
-                None    => Conversion::Invalid,
-                Some(c) => Conversion::Ok(c)
+            let mut v : Vec<u8> = Vec::new();
+            let mut i = 0;
+            while to[i] != 0 {
+                v.push(to[i]);
+                i += 1;
             }
+            Conversion::Ok(v)
         }
     }
 
     
-    pub fn decompose(c: char) -> Vec<u8> {
-        match c as u32 {
-            0x00000 ... 0x0000ff => vec![((c as u32) & 0xff) as u8],
-            0x00100 ... 0x00ffff => vec![(((c as u32) >> 8) & 0xff) as u8, ((c as u32) & 0xff) as u8],
-            0x10000 ... 0xffffff => vec![(((c as u32) >> 16) & 0xff) as u8, (((c as u32) >> 8) & 0xff) as u8, ((c as u32) & 0xff) as u8],
-            _                    => vec![(((c as u32) >> 24) & 0xff) as u8, (((c as u32) >> 16) & 0xff) as u8, (((c as u32) >> 8) & 0xff) as u8, ((c as u32) & 0xff) as u8],
-        }
-    }
-
-
 }
 
 
@@ -127,32 +115,25 @@ mod tests {
     #[test]
     fn single_char() { 
         let cd = CharDecoder::new("utf-8", "latin1");
-        assert_eq!(cd.convert('a'), Conversion::Ok('a')); 
+        assert_eq!(cd.convert(vec!['a' as u8]), Conversion::Ok(vec!['a' as u8])); 
     }
 
     #[test]
     fn utf8_complete_char() { 
         let cd = CharDecoder::new("utf-8", "latin1");
-        let chr = char::from_u32((195 << 8) + 161).unwrap();
-        assert_eq!(cd.convert(chr), Conversion::Ok(225 as char)); 
+        assert_eq!(cd.convert(vec![195u8, 161u8]), Conversion::Ok(vec![225u8])); 
     }
 
     #[test]
     fn utf8_incomplete_char() {
         let cd = CharDecoder::new("utf-8", "latin1");
-        assert_eq!(cd.convert(195 as char), Conversion::Incomplete);
+        assert_eq!(cd.convert(vec![195u8]), Conversion::Incomplete);
     }
 
     #[test]
     fn utf8_invalid_char() {
         let cd = CharDecoder::new("utf-8", "latin1");
-        let chr = 0xc0 as char;
-        assert_eq!(cd.convert(chr), Conversion::Invalid);
-    }
-
-    #[test]
-    fn decompose() {
-        assert_eq!(CharDecoder::decompose(char::from_u32((195 << 8) + 161).unwrap()), vec![195, 161]);
+        assert_eq!(cd.convert(vec![0xc0]), Conversion::Invalid);
     }
 
     // TODO - for tests, use <http://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt>

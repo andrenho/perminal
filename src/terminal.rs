@@ -1,7 +1,11 @@
 use std::collections::HashMap;
 
-use userevent::UserEvent;
+use chardecoder::CharDecoder;
 use command::Command;
+use userevent::UserEvent;
+use userevent::UserEvent::KeyPress;
+use userevent::UserEvent::SpecialKeyPress;
+use userevent::SpecialKey::*;
 
 //
 // TERMINAL
@@ -15,7 +19,12 @@ impl Terminal {
     }
 
     pub fn parse_user_event(&self, event: UserEvent) -> Vec<u8> {
-        unimplemented!()
+        match event {
+            KeyPress(c) => c,
+            SpecialKeyPress(key) => match key {
+                F12 => "@kf12|",
+            }.to_string().into_bytes(),
+        }
     }
 
     pub fn parse_output_from_plugin(&self, data: &mut Vec<u8>) -> Vec<Command> {
@@ -41,9 +50,9 @@ mod tests {
     #[test]
     fn user_events() {
         let t = Terminal::new();
-        assert_eq!(t.parse_user_event(KeyPress('a')), vec!['a' as u8]);
-        assert_eq!(t.parse_user_event(KeyPress('A')), vec!['A' as u8]);
-        assert_eq!(t.parse_user_event(KeyPress('á')), vec![195, 161]);
+        assert_eq!(t.parse_user_event(KeyPress(vec!['a' as u8])), vec!['a' as u8]);
+        assert_eq!(t.parse_user_event(KeyPress(vec!['A' as u8])), vec!['A' as u8]);
+        assert_eq!(t.parse_user_event(KeyPress(vec![195, 161])), vec![195, 161]);
         assert_eq!(t.parse_user_event(SpecialKeyPress(F12)), "@kf12|".as_bytes());
         // TODO - mouse
     }

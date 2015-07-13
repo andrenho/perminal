@@ -3,7 +3,7 @@ pub enum SpecialKey {
 }
 
 pub enum UserEvent {
-    KeyPress(char),
+    KeyPress(Vec<u8>),
     SpecialKeyPress(SpecialKey),
 }
 
