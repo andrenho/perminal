@@ -1,4 +1,7 @@
 [package]
 name = "perminal"
 version = "0.1.0"
-authors = ["ronei"]
+authors = ["andre.nho@gmail.com"]
+
+[dependencies]
+libc = "0.1"
