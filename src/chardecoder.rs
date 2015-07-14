@@ -29,9 +29,9 @@ extern "C" {
 // return values from `convert`
 //
 #[derive(PartialEq, Eq, Debug)]
-enum Conversion {
+pub enum Conversion {
     Ok(Vec<u8>),
-    Incomplete,
+    Incomplete(Vec<u8>),
     Invalid,
 }
 
@@ -62,7 +62,7 @@ impl CharDecoder {
 
     pub fn convert(&self, c: Vec<u8>) -> Conversion {
 
-        //if c[0] < 0xbf { return Conversion::Ok(vec![c[0]]); }  // skip single-char conversions
+        if c[0] < 0xbf { return Conversion::Ok(vec![c[0]]); }  // skip single-char conversions
 
         let inbytesleft = cmp::min(c.len(), 4);
         let outbytesleft : size_t = 4;
@@ -76,7 +76,7 @@ impl CharDecoder {
             match Error::last_os_error().raw_os_error().unwrap() {
                 E2BIG  => panic!("Invalid outbuf size in iconv."),
                 EILSEQ => Conversion::Invalid,
-                EINVAL => Conversion::Incomplete,
+                EINVAL => Conversion::Incomplete(from),
                 _      => unreachable!(),
             }
         } else {
@@ -127,7 +127,7 @@ mod tests {
     #[test]
     fn utf8_incomplete_char() {
         let cd = CharDecoder::new("utf-8", "latin1");
-        assert_eq!(cd.convert(vec![195u8]), Conversion::Incomplete);
+        assert_eq!(cd.convert(vec![195u8]), Conversion::Incomplete(vec![195u8]));
     }
 
     #[test]

@@ -1,10 +1,12 @@
 #[derive(PartialEq, Eq, Debug)]
 pub enum Command {
+    NoOp,
+
     //
     // CHARACTERS
     //
-    PrintChar(char),
-    InvalidUtf8(u32),
+    PrintChar(Vec<u8>),
+    InvalidUtf8,
     
     //
     // SCREEN/CURSOR
