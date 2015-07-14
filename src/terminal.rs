@@ -52,7 +52,7 @@ impl Terminal {
 
             match(self.cd.convert(data.to_vec())) {
                 
-                Ok(d) => {
+                Complete(d) => {
                     for _ in d.iter() { data.remove(0); }  // remove from queue
                     match cmd_mode {
 
@@ -145,7 +145,7 @@ impl Terminal {
         for c in s.chars() {
             match mode {
                 Mode::Command => { 
-                    if(c == ';') {
+                    if c == ';' {
                         mode = Mode::Number;
                         command.push('#');
                     } else {
@@ -153,22 +153,30 @@ impl Terminal {
                     }
                 },
                 Mode::Number => {
-                    if(c == '|') {
-                        command.push('|');
-                        println!("{:?}", command);
-                        return command.into_iter().collect()
-                    } else if(c == ';') {
-                        command.push('#');
+                    if c == '|' || c == ';' {
+                        match current.iter().cloned().collect::<String>().parse::<u16>() {
+                            Ok(n)  => p.push(n),
+                            Err(_) => return "".to_string(),
+                        }
+                        current.clear();
+                        if c == '|' {
+                            command.push('|');
+                            //println!("{:?}", command);
+                            return command.into_iter().collect()
+                        } else {
+                            command.push('#');
+                        }
+                    } else if !c.is_digit(10) {
+                        return "".to_string();
                     } else {
-                        // TODO
-                        p.push(0);
+                        current.push(c);
                     }
                 },
             };
         }
 
         // TODO - needs to rollback to data
-
+        "".to_string()
     }
 
 }

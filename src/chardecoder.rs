@@ -30,7 +30,7 @@ extern "C" {
 //
 #[derive(PartialEq, Eq, Debug)]
 pub enum Conversion {
-    Ok(Vec<u8>),
+    Complete(Vec<u8>),
     Incomplete(Vec<u8>),
     Invalid,
 }
@@ -62,7 +62,7 @@ impl CharDecoder {
 
     pub fn convert(&self, c: Vec<u8>) -> Conversion {
 
-        if c[0] < 0xbf { return Conversion::Ok(vec![c[0]]); }  // skip single-char conversions
+        if c[0] < 0xbf { return Conversion::Complete(vec![c[0]]); }  // skip single-char conversions
 
         let inbytesleft = cmp::min(c.len(), 4);
         let outbytesleft : size_t = 4;
@@ -86,7 +86,7 @@ impl CharDecoder {
                 v.push(to[i]);
                 i += 1;
             }
-            Conversion::Ok(v)
+            Conversion::Complete(v)
         }
     }
 
@@ -115,13 +115,13 @@ mod tests {
     #[test]
     fn single_char() { 
         let cd = CharDecoder::new("utf-8", "latin1");
-        assert_eq!(cd.convert(vec!['a' as u8]), Conversion::Ok(vec!['a' as u8])); 
+        assert_eq!(cd.convert(vec!['a' as u8]), Conversion::Complete(vec!['a' as u8])); 
     }
 
     #[test]
     fn utf8_complete_char() { 
         let cd = CharDecoder::new("utf-8", "latin1");
-        assert_eq!(cd.convert(vec![195u8, 161u8]), Conversion::Ok(vec![225u8])); 
+        assert_eq!(cd.convert(vec![195u8, 161u8]), Conversion::Complete(vec![225u8])); 
     }
 
     #[test]
