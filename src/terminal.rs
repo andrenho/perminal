@@ -11,9 +11,7 @@ use userevent::UserEvent::KeyPress;
 use userevent::UserEvent::SpecialKeyPress;
 use userevent::SpecialKey::*;
 
-const MAX_COMMAND_SIZE : usize = 16;
-
-enum CommandMode { REGULAR, COMMAND }
+const MAX_Command_SIZE : usize = 16;
 
 //
 // TERMINAL
@@ -42,8 +40,10 @@ impl Terminal {
 
 
     pub fn parse_output_from_plugin(&self, data: &mut Vec<u8>) -> Vec<Command> {
+        enum CommandMode { Regular, Command }
+
         let mut cmds : Vec<Command> = Vec::new();
-        let mut cmd_mode = CommandMode::REGULAR;
+        let mut cmd_mode = CommandMode::Regular;
         let mut cmd_buffer : Vec<u8> = Vec::new();
 
         while !data.is_empty() {
@@ -56,20 +56,20 @@ impl Terminal {
                     for _ in d.iter() { data.remove(0); }  // remove from queue
                     match cmd_mode {
 
-                        CommandMode::REGULAR => {
+                        CommandMode::Regular => {
                             if d[0] == 27 {
-                                cmd_mode = CommandMode::COMMAND;
+                                cmd_mode = CommandMode::Command;
                                 cmd_buffer.push(27);
                             } else {
                                 cmds.push(PrintChar(d));
                             }
                         },
                         
-                        CommandMode::COMMAND => {
+                        CommandMode::Command => {
                             // this lambda rollbacks data in command buffer back to data
                             let rollback = |cmd_buffer: &mut Vec<u8>, cmd_mode: &mut CommandMode, cmds: &mut Vec<Command>| {
                                 for c in cmd_buffer.iter() { cmds.push(PrintChar(vec![*c])); }
-                                *cmd_mode = CommandMode::REGULAR;
+                                *cmd_mode = CommandMode::Regular;
                                 cmd_buffer.clear();
                             };
 
@@ -84,7 +84,7 @@ impl Terminal {
 
                             if *cmd_buffer.last().unwrap() != '|' as u8 {   // command is not over
                                 // check if the command is too long
-                                if cmd_buffer.len() > MAX_COMMAND_SIZE {
+                                if cmd_buffer.len() > MAX_Command_SIZE {
                                     rollback(&mut cmd_buffer, &mut cmd_mode, &mut cmds);
                                 }
                             } else {
@@ -94,7 +94,7 @@ impl Terminal {
                                     }
                                     cmd @ _ => {
                                         cmds.push(cmd);
-                                        cmd_mode = CommandMode::REGULAR;
+                                        cmd_mode = CommandMode::Regular;
                                         cmd_buffer.clear();
                                     },
                                 }
@@ -120,10 +120,55 @@ impl Terminal {
 
     
     fn interpret_command(&self, cmd: &str) -> Command {
-        match(cmd) {
-            "\x1b@cuf1|" => CursorRight,
+        let mut p : Vec<u16> = Vec::new();
+        match(self.interpret_parameters(cmd, &mut p).as_ref()) {
+            "\x1b@cuf1|"  => CursorRight,
+            "\x1b@csr##|" => ChangeScrollRegion(p[0], p[1]),
             _ => NoOp,
         }
+    }
+
+
+    fn interpret_parameters(&self, cmd: &str, p: &mut Vec<u16>) -> String {
+        // check if there's a ';'
+        let s = cmd.to_string();
+        if !cmd.to_string().contains(';') {
+            return s;
+        }
+
+        // string contains a ';' - start parsing
+        enum Mode { Command, Number }
+        let mut mode = Mode::Command;
+        let mut command : Vec<char> = Vec::new();
+        let mut current : Vec<char> = Vec::new();
+
+        for c in s.chars() {
+            match mode {
+                Mode::Command => { 
+                    if(c == ';') {
+                        mode = Mode::Number;
+                        command.push('#');
+                    } else {
+                        command.push(c);
+                    }
+                },
+                Mode::Number => {
+                    if(c == '|') {
+                        command.push('|');
+                        println!("{:?}", command);
+                        return command.into_iter().collect()
+                    } else if(c == ';') {
+                        command.push('#');
+                    } else {
+                        // TODO
+                        p.push(0);
+                    }
+                },
+            };
+        }
+
+        // TODO - needs to rollback to data
+
     }
 
 }
@@ -196,7 +241,7 @@ mod tests {
     }
 
     // 
-    // TEST PLUGIN COMMAND OUTPUT
+    // TEST PLUGIN Command OUTPUT
     //
 
     #[test] fn cmd_complete_data() {
@@ -246,28 +291,36 @@ mod tests {
 
 
     // 
-    // TEST PLUGIN COMMAND PARAMETERS OUTPUT
+    // TEST PLUGIN Command PARAMETERS OUTPUT
     //
 
     #[test] fn cmdpar_complete_data() {
         let t = Terminal::new();
-        let mut data = "\x1b@csr#12;32|".to_string().into_bytes();
+        let mut data = "\x1b@csr;12;32|".to_string().into_bytes();
         assert_eq!(t.parse_output_from_plugin(&mut data), [ChangeScrollRegion(12, 32)]);
     }
 
     #[test] fn cmdpar_invalid_data() {  // should rollback
         let t = Terminal::new();
-        let mut data = "\x1b@csr#12;32a".to_string().into_bytes();
-        t.parse_output_from_plugin(&mut data);
+        let mut data = "\x1b@csr;12;32a".to_string().into_bytes();
+        assert_eq!(t.parse_output_from_plugin(&mut data), printchar_array("\x1b@csr;12;32a"));
         assert_eq!(data.len(), 0);
     }
 
     #[test] fn cmdpar_incomplete_data() {
-        unimplemented!()
+        let mut data = "\x1b@csr;12;3".to_string().into_bytes();
+        assert_eq!(Terminal::new().parse_output_from_plugin(&mut data), []);
+        assert_eq!(data.len(), 10);
+
+        data.push('2' as u8); data.push('|' as u8);
+        assert_eq!(Terminal::new().parse_output_from_plugin(&mut data), [ChangeScrollRegion(12, 32)]);
+        assert_eq!(data.len(), 0);
     }
 
     #[test] fn cmdpar_not_a_real_command() {
-        unimplemented!()
+        let mut data = "\x1b@csp;12;32|".to_string().into_bytes();
+        let v = Terminal::new().parse_output_from_plugin(&mut data);
+        assert_eq!(v.len(), 12);
     }
 
 
