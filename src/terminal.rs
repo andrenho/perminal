@@ -310,8 +310,8 @@ mod tests {
 
     #[test] fn cmdpar_invalid_data() {  // should rollback
         let t = Terminal::new();
-        let mut data = "\x1b@csr;12;32a".to_string().into_bytes();
-        assert_eq!(t.parse_output_from_plugin(&mut data), printchar_array("\x1b@csr;12;32a"));
+        let mut data = "\x1b@csr;12;32a|".to_string().into_bytes();
+        assert_eq!(t.parse_output_from_plugin(&mut data), printchar_array("\x1b@csr;12;32a|"));
         assert_eq!(data.len(), 0);
     }
 
