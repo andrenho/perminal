@@ -1,7 +1,5 @@
 #[derive(PartialEq, Eq, Debug)]
 pub enum Command {
-    NoOp,
-
     //
     // CHARACTERS
     //

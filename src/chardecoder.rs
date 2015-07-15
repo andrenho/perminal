@@ -1,6 +1,5 @@
 extern crate libc;
 
-use std::char;
 use std::io::Error;
 use std::mem;
 use std::ffi::CString;
@@ -106,8 +105,6 @@ impl Drop for CharDecoder {
 //
 #[cfg(test)]
 mod tests {
-
-    use std::char;
 
     use super::CharDecoder;
     use super::Conversion;

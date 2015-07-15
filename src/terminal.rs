@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-use std::cell::RefCell;
 use std::str;
 
 use chardecoder::CharDecoder;
@@ -11,7 +9,7 @@ use userevent::UserEvent::KeyPress;
 use userevent::UserEvent::SpecialKeyPress;
 use userevent::SpecialKey::*;
 
-const MAX_Command_SIZE : usize = 16;
+const MAX_COMMAND_SIZE : usize = 16;
 
 //
 // TERMINAL
@@ -42,6 +40,13 @@ impl Terminal {
     pub fn parse_output_from_plugin(&self, data: &mut Vec<u8>) -> Vec<Command> {
         enum CommandMode { Regular, Command }
 
+        // this lambda rollbacks data in command buffer back to data
+        let rollback = |cmd_buffer: &mut Vec<u8>, cmd_mode: &mut CommandMode, cmds: &mut Vec<Command>| {
+            for c in cmd_buffer.iter() { cmds.push(PrintChar(vec![*c])); }
+            *cmd_mode = CommandMode::Regular;
+            cmd_buffer.clear();
+        };
+
         let mut cmds : Vec<Command> = Vec::new();
         let mut cmd_mode = CommandMode::Regular;
         let mut cmd_buffer : Vec<u8> = Vec::new();
@@ -50,7 +55,7 @@ impl Terminal {
             
             //for d in data.iter() { print!("{} ", d); } println!("");
 
-            match(self.cd.convert(data.to_vec())) {
+            match self.cd.convert(data.to_vec()) {
                 
                 Complete(d) => {
                     for _ in d.iter() { data.remove(0); }  // remove from queue
@@ -66,12 +71,6 @@ impl Terminal {
                         },
                         
                         CommandMode::Command => {
-                            // this lambda rollbacks data in command buffer back to data
-                            let rollback = |cmd_buffer: &mut Vec<u8>, cmd_mode: &mut CommandMode, cmds: &mut Vec<Command>| {
-                                for c in cmd_buffer.iter() { cmds.push(PrintChar(vec![*c])); }
-                                *cmd_mode = CommandMode::Regular;
-                                cmd_buffer.clear();
-                            };
 
                             // if ESC is found when a command is already being parsed, rollback and reset the parsing
                             if *d.last().unwrap() == 27u8 {  
@@ -84,19 +83,17 @@ impl Terminal {
 
                             if *cmd_buffer.last().unwrap() != '|' as u8 {   // command is not over
                                 // check if the command is too long
-                                if cmd_buffer.len() > MAX_Command_SIZE {
+                                if cmd_buffer.len() > MAX_COMMAND_SIZE {
                                     rollback(&mut cmd_buffer, &mut cmd_mode, &mut cmds);
                                 }
                             } else {
                                 match self.interpret_command(str::from_utf8(&cmd_buffer).unwrap()) {
-                                    NoOp    => {
-                                        rollback(&mut cmd_buffer, &mut cmd_mode, &mut cmds);
-                                    }
-                                    cmd @ _ => {
+                                    Some(cmd) => {
                                         cmds.push(cmd);
                                         cmd_mode = CommandMode::Regular;
                                         cmd_buffer.clear();
                                     },
+                                    None => rollback(&mut cmd_buffer, &mut cmd_mode, &mut cmds),
                                 }
                             }
                         },
@@ -108,7 +105,7 @@ impl Terminal {
                     cmds.push(InvalidUtf8);
                 },
 
-                Incomplete(d) => { 
+                Incomplete(_) => { 
                     break;  // exit loop
                 }
                 
@@ -119,21 +116,24 @@ impl Terminal {
     }
 
     
-    fn interpret_command(&self, cmd: &str) -> Command {
+    fn interpret_command(&self, cmd: &str) -> Option<Command> {
         let mut p : Vec<u16> = Vec::new();
-        match(self.interpret_parameters(cmd, &mut p).as_ref()) {
-            "\x1b@cuf1|"  => CursorRight,
-            "\x1b@csr##|" => ChangeScrollRegion(p[0], p[1]),
-            _ => NoOp,
+        match self.interpret_parameters(cmd, &mut p) {
+            Some(v) => match v.as_ref() {
+                "\x1b@cuf1|"  => Some(CursorRight),
+                "\x1b@csr##|" => Some(ChangeScrollRegion(p[0], p[1])),
+                _ => None,
+            },
+            None => None,
         }
     }
 
 
-    fn interpret_parameters(&self, cmd: &str, p: &mut Vec<u16>) -> String {
+    fn interpret_parameters(&self, cmd: &str, p: &mut Vec<u16>) -> Option<String> {
         // check if there's a ';'
         let s = cmd.to_string();
         if !cmd.to_string().contains(';') {
-            return s;
+            return Some(s);
         }
 
         // string contains a ';' - start parsing
@@ -156,18 +156,18 @@ impl Terminal {
                     if c == '|' || c == ';' {
                         match current.iter().cloned().collect::<String>().parse::<u16>() {
                             Ok(n)  => p.push(n),
-                            Err(_) => return "".to_string(),
+                            Err(_) => return None,
                         }
                         current.clear();
                         if c == '|' {
                             command.push('|');
                             //println!("{:?}", command);
-                            return command.into_iter().collect()
+                            return Some(command.into_iter().collect())
                         } else {
                             command.push('#');
                         }
                     } else if !c.is_digit(10) {
-                        return "".to_string();
+                        return None
                     } else {
                         current.push(c);
                     }
@@ -175,8 +175,8 @@ impl Terminal {
             };
         }
 
-        // TODO - needs to rollback to data
-        "".to_string()
+        // needs to rollback to data
+        None
     }
 
 }
