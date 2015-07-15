@@ -1,3 +1,4 @@
+mod chars;
 mod chardecoder;
 mod matrix;
 mod terminal;
