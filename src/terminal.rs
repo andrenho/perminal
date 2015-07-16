@@ -200,19 +200,23 @@ mod tests {
     // TEST USER EVENTS
     //
 
-    #[test] fn userevent_simple_event() {
+    #[test] 
+    fn userevent_simple_event() {
         assert_eq!(Terminal::new().parse_user_event(KeyPress(vec!['a' as u8])), vec!['a' as u8]);
     }
 
-    #[test] fn userevent_shift_event() {
+    #[test] 
+    fn userevent_shift_event() {
         assert_eq!(Terminal::new().parse_user_event(KeyPress(vec!['A' as u8])), vec!['A' as u8]);
     }
 
-    #[test] fn userevent_unicode_event() {
+    #[test]
+    fn userevent_unicode_event() {
         assert_eq!(Terminal::new().parse_user_event(KeyPress(vec![195, 161])), vec![195, 161]);
     }
 
-    #[test] fn userevent_special_key_event() {
+    #[test] 
+    fn userevent_special_key_event() {
         assert_eq!(Terminal::new().parse_user_event(SpecialKeyPress(F12)), "@kf12|".as_bytes());
     }
 
@@ -223,26 +227,30 @@ mod tests {
     // TEST PLUGIN SIMPLE OUTPUT
     //
     
-    #[test] fn plugin_complete_data() {
+    #[test] 
+    fn plugin_complete_data() {
         let mut data = "abc".to_string().into_bytes();
         assert_eq!(Terminal::new().parse_output_from_plugin(&mut data), printchar_array("abc"));
         assert_eq!(data.len(), 0);
     }
 
-    #[test] fn plugin_unicode_data() {
+    #[test] 
+    fn plugin_unicode_data() {
         let mut data = vec![97u8, 195u8, 161u8];
         assert_eq!(Terminal::new().parse_output_from_plugin(&mut data), [PrintChar(vec![97u8]), PrintChar(vec![195u8, 161u8])]);
         assert_eq!(data.len(), 0);
     }
 
-    #[test] fn plugin_incomplete_data() {
+    #[test] 
+    fn plugin_incomplete_data() {
         let mut data = vec!['a' as u8, 195u8];
         assert_eq!(Terminal::new().parse_output_from_plugin(&mut data), [PrintChar(vec!['a' as u8])]);
         assert_eq!(data.len(), 1);
         assert_eq!(data[0], 195u8);
     }
 
-    #[test] fn plugin_invalid_unicode() {
+    #[test] 
+    fn plugin_invalid_unicode() {
         let mut data = vec![0xc0 as u8];
         assert_eq!(Terminal::new().parse_output_from_plugin(&mut data), [InvalidUtf8]);
         assert_eq!(data.len(), 0);
@@ -252,13 +260,15 @@ mod tests {
     // TEST PLUGIN Command OUTPUT
     //
 
-    #[test] fn cmd_complete_data() {
+    #[test] 
+    fn cmd_complete_data() {
         let mut data = "a\x1b@cuf1|".to_string().into_bytes();
         assert_eq!(Terminal::new().parse_output_from_plugin(&mut data), [PrintChar(vec!['a' as u8]), CursorRight]);
         assert_eq!(data.len(), 0);
     }
 
-    #[test] fn cmd_incomplete_data() {
+    #[test] 
+    fn cmd_incomplete_data() {
         let mut data = "a\x1b@cu".to_string().into_bytes();
         assert_eq!(Terminal::new().parse_output_from_plugin(&mut data), [PrintChar(vec!['a' as u8])]);
         assert_eq!(data.len(), 4);
@@ -269,26 +279,30 @@ mod tests {
         assert_eq!(data.len(), 0);
     }
 
-    #[test] fn cmd_command_too_long() {
+    #[test] 
+    fn cmd_command_too_long() {
         let mut data = "a\x1b@abcdefghijklmnopqrstuvwxyz".to_string().into_bytes();
         Terminal::new().parse_output_from_plugin(&mut data);
         assert_eq!(data.len(), 0);
     }
 
-    #[test] fn cmd_not_a_real_command() {
+    #[test] 
+    fn cmd_not_a_real_command() {
         let mut data = "a\x1b@x|b".to_string().into_bytes();
         assert_eq!(Terminal::new().parse_output_from_plugin(&mut data), printchar_array("a\x1b@x|b"));
         assert_eq!(data.len(), 0);
     }
 
-    #[test] fn cmd_two_commands() {
+    #[test]
+    fn cmd_two_commands() {
         let mut data = "a\x1b@cuf1|\x1b@cuf1|\x1b@cu".to_string().into_bytes();
         assert_eq!(Terminal::new().parse_output_from_plugin(&mut data), [PrintChar(vec!['a' as u8]), CursorRight, CursorRight]);
         assert_eq!(data.len(), 4);
         assert_eq!(data, [27u8, '@' as u8, 'c' as u8, 'u' as u8]);
     }
 
-    #[test] fn cmd_esc_in_midcommand() {
+    #[test]
+    fn cmd_esc_in_midcommand() {
         let mut data = "\x1b@cu\x1b@cuf1|".to_string().into_bytes();
         assert_eq!(Terminal::new().parse_output_from_plugin(&mut data), [
             PrintChar(vec![27u8]), PrintChar(vec!['@' as u8]), PrintChar(vec!['c' as u8]), 
@@ -302,20 +316,23 @@ mod tests {
     // TEST PLUGIN Command PARAMETERS OUTPUT
     //
 
-    #[test] fn cmdpar_complete_data() {
+    #[test] 
+    fn cmdpar_complete_data() {
         let t = Terminal::new();
         let mut data = "\x1b@csr;12;32|".to_string().into_bytes();
         assert_eq!(t.parse_output_from_plugin(&mut data), [ChangeScrollRegion(12, 32)]);
     }
 
-    #[test] fn cmdpar_invalid_data() {  // should rollback
+    #[test] 
+    fn cmdpar_invalid_data() {  // should rollback
         let t = Terminal::new();
         let mut data = "\x1b@csr;12;32a|".to_string().into_bytes();
         assert_eq!(t.parse_output_from_plugin(&mut data), printchar_array("\x1b@csr;12;32a|"));
         assert_eq!(data.len(), 0);
     }
 
-    #[test] fn cmdpar_incomplete_data() {
+    #[test] 
+    fn cmdpar_incomplete_data() {
         let mut data = "\x1b@csr;12;3".to_string().into_bytes();
         assert_eq!(Terminal::new().parse_output_from_plugin(&mut data), []);
         assert_eq!(data.len(), 10);
@@ -325,7 +342,8 @@ mod tests {
         assert_eq!(data.len(), 0);
     }
 
-    #[test] fn cmdpar_not_a_real_command() {
+    #[test] 
+    fn cmdpar_not_a_real_command() {
         let mut data = "\x1b@csp;12;32|".to_string().into_bytes();
         let v = Terminal::new().parse_output_from_plugin(&mut data);
         assert_eq!(v.len(), 12);

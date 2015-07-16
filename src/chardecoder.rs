@@ -1,9 +1,10 @@
 extern crate libc;
 
+use std::cmp;
+use std::ffi::CString;
 use std::io::Error;
 use std::mem;
-use std::ffi::CString;
-use std::cmp;
+use std::str;
 
 use self::libc::consts::os::posix88::{E2BIG, EILSEQ, EINVAL};
 use self::libc::{c_char, size_t, c_int, c_void};
@@ -90,6 +91,15 @@ impl CharDecoder {
     }
 
     
+    pub fn vec_to_char(v: &Vec<u8>) -> Option<char> {
+        if v[0] <= 127 { 
+            return Some(v[0] as char); 
+        }
+        match str::from_utf8(v) {
+            Ok(s) => Some(s.chars().nth(0).unwrap()),
+            Err(_) => None,
+        }
+    }
 }
 
 
@@ -131,6 +141,12 @@ mod tests {
     fn utf8_invalid_char() {
         let cd = CharDecoder::new("utf-8", "latin1");
         assert_eq!(cd.convert(vec![0xc0]), Conversion::Invalid);
+    }
+
+    #[test]
+    fn vec_to_char() {
+        assert_eq!(CharDecoder::vec_to_char(&vec!['a' as u8]), Some('a'));
+        assert_eq!(CharDecoder::vec_to_char(&vec![195u8, 161u8]), Some('á'));
     }
 
     // TODO - for tests, use <http://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt>
