@@ -103,25 +103,24 @@ impl Matrix {
             self.move_cursor(x, y);
         } else {
             self.cursor.x = 0;
-            self.cursor_advance_y(1);
+            self.cursor_advance_y();
         }
     }
 
 
-    fn cursor_advance_y(&mut self, n: isize) {
+    fn cursor_advance_y(&mut self) {
         let x = self.cursor.x;
-        let y = ((self.cursor.y as isize) + n) as usize;
+        let y = self.cursor.y+1;
         if y < self.sr.bottom {
             self.move_cursor(x, y);
         } else {
-            let b = self.sr.bottom;
-            self.scroll((b as isize) - (y as isize));
-            self.move_cursor(x, b-1);
+            self.scroll(-1);
         }
     }
 
 
     fn scroll(&mut self, n: isize) {
+        println!("scroll {}", n);
         if n < 0 {
             let n = (-n) as usize;
             for _ in 0 .. n {
@@ -202,6 +201,8 @@ mod tests {
         let mut m = Matrix::new(80, 25);
         m.execute(PrintChar(vec![195u8, 161u8]));
         assert_eq!(m.cell(0, 0).unwrap().c, 'á');
+        assert_eq!(m.cursor.x, 1);
+        assert_eq!(m.cursor.y, 0);
     }
     
     #[test]
@@ -246,7 +247,16 @@ mod tests {
         assert_eq!(m.cell(79,23).unwrap().c, 'a');
         assert_eq!(m.cell(79,24).unwrap().c, ' ');
         assert_eq!(m.cursor.x, 0);
-        assert_eq!(m.cursor.y, 23);
+        assert_eq!(m.cursor.y, 24);
+    }
+
+    #[test]
+    fn screen_fill() {
+        let mut m = Matrix::new(80, 25);
+        for _ in 0 .. 30000 {
+            m.execute(PrintChar(vec!['x' as u8]));
+        }
+        assert_eq!(m.cursor.y, 24);
     }
 
 }
