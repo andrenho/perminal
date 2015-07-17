@@ -18,6 +18,14 @@ struct Position {
     y: usize,
 }
 
+#[derive(Clone)]
+pub struct Dirty {
+    cells: Vec<Position>,
+    full_screen: bool,
+    bell: bool,
+    flash: bool
+}
+
 pub struct Matrix {
     pub w: usize,
     pub h: usize,
@@ -25,7 +33,7 @@ pub struct Matrix {
     current_attr: Attributes,
     sr: ScrollRegion,
     cursor: Position,
-    dirty: Vec<Position>,
+    dirty: Dirty,
 }
 
 
@@ -50,7 +58,12 @@ impl Matrix {
             current_attr: current_attr,
             sr: ScrollRegion { top: 0, bottom: h },
             cursor: Position { x: 0, y: 0 },
-            dirty: Vec::new(),
+            dirty: Dirty {
+                cells: Vec::new(),
+                full_screen: false,
+                bell: false,
+                flash: false,
+            }
         }
     }
 
@@ -78,14 +91,24 @@ impl Matrix {
             None     => self.execute(InvalidUtf8),
         }
         let c = self.cursor;
-        self.dirty.push(Position { x: c.x, y: c.y });
+        self.dirty.cells.push(Position { x: c.x, y: c.y });
         self.cursor_advance_x(1);
     }
 
 
-    pub fn dirty(&mut self) -> Vec<Position> {
-        let d = self.dirty.to_vec();
-        self.dirty.clear();
+    pub fn dirty(&mut self) -> Dirty {
+        let d = Dirty {
+            cells: self.dirty.cells.to_vec(),
+            full_screen: self.dirty.full_screen,
+            bell: self.dirty.bell,
+            flash: self.dirty.flash,
+        };
+        self.dirty = Dirty { 
+            cells: Vec::new(), 
+            full_screen: false,
+            bell: false,
+            flash: false,
+        };
         d
     }
 
@@ -120,7 +143,6 @@ impl Matrix {
 
 
     fn scroll(&mut self, n: isize) {
-        println!("scroll {}", n);
         if n < 0 {
             let n = (-n) as usize;
             for _ in 0 .. n {
@@ -133,6 +155,7 @@ impl Matrix {
                 }
                 self.cells.push(v);
             }
+            self.dirty.full_screen = true;
         } else if n > 0 {
             let n = n as usize;
             for _ in 0 .. n {
@@ -145,6 +168,7 @@ impl Matrix {
                 }
                 self.cells.insert(0, v);
             }
+            self.dirty.full_screen = true;
         }
     }
     
@@ -189,11 +213,11 @@ mod tests {
         m.execute(PrintChar(vec!['a' as u8]));
         m.execute(PrintChar(vec!['a' as u8]));
         let d = m.dirty();
-        assert_eq!(d.len(), 2);
-        assert_eq!(d[0], Position { x:0, y:0 });
-        assert_eq!(d[1], Position { x:1, y:0 });
+        assert_eq!(d.cells.len(), 2);
+        assert_eq!(d.cells[0], Position { x:0, y:0 });
+        assert_eq!(d.cells[1], Position { x:1, y:0 });
         let d2 = m.dirty();
-        assert_eq!(d2.len(), 0);
+        assert_eq!(d2.cells.len(), 0);
     }
 
     #[test]
