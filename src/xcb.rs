@@ -35,6 +35,10 @@ pub struct Connection {
     default_screen: c_int,
 }
 
+pub struct Window {
+    id: xcb_window_t,
+}
+
 impl Connection {
 
     pub fn connect() -> Result<Self, &'static str> {
@@ -47,31 +51,20 @@ impl Connection {
         }
     }
 
+    fn create_simple_window(&self, w: u16, h: u16, border: u16, values: Vec<(u32, u32)>) -> Self {
+        let w = Window { id: unsafe { xcb_generate_id(self.conn) } };
+    //fn xcb_create_window(conn: *mut c_void, depth: u8, wid: xcb_window_t, parent: xcb_window_t,
+    //                     x: i16, y: i16, w: u16, h: u16, border: u16, _class: u16, visual: xcb_visualid_t,
+    //                     value_mask: u32, value_list: *const u32) -> xcb_void_cookie_t;
+        w
+    }
+
 }
 
 impl Drop for Connection {
     
     fn drop(&mut self) {
         unsafe { xcb_disconnect(self.conn); }
-    }
-
-}
-
-//
-// WINDOW
-//
-pub struct Window {
-    id: xcb_window_t,
-}
-
-impl Window {
-
-    fn new(c: &Connection, w: u16, h: u16, border: u16, values: Vec<(u32, u32)>) -> Self {
-        let w = Window { id: unsafe { xcb_generate_id(c.conn) } };
-    //fn xcb_create_window(conn: *mut c_void, depth: u8, wid: xcb_window_t, parent: xcb_window_t,
-    //                     x: i16, y: i16, w: u16, h: u16, border: u16, _class: u16, visual: xcb_visualid_t,
-    //                     value_mask: u32, value_list: *const u32) -> xcb_void_cookie_t;
-        w
     }
 
 }
