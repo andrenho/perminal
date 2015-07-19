@@ -33,7 +33,7 @@ pub struct PTY {
 
 impl PTY {
 
-    pub fn new(shell: Option<&'static str>) -> PTY {
+    pub fn new(shell: Option<&'static str>, login: bool) -> PTY {
         let shell = match shell {
             Some(s) => s.to_string(),
             None => match env::var("SHELL") {
@@ -49,7 +49,7 @@ impl PTY {
                 env::set_var("TERM", "perminal");
                 unsafe {
                     let sh = CString::new(shell.clone()).unwrap();
-                    let mut argv = vec![CString::new("").unwrap().as_ptr()];
+                    let mut argv = vec![CString::new(if login { "" } else { "sh" }).unwrap().as_ptr()];
                     if execv(sh.as_ptr(), argv.as_mut_ptr()) == -1 {
                         panic!("execvp");
                     }
@@ -95,31 +95,30 @@ impl PTY {
         }
     }
 
-/*
-int 
-PTY::Read(uint8_t* data, int max_sz) const
-{
-    int nread = read(fd, data, max_sz);
-    
-    if(nread == -1) {
-        switch(errno) {
-        case EAGAIN:
-            return 0;   // no data from socket (socket is O_NONBLOCK)
-        case EIO:
-            return -1;  // the connection was cut
-        default:
-            perror("read");
-            throw PluginException("There was an error reading from the PTY.");
+
+    fn write(&self, data: &Vec<u8>) {
+        if !unsafe { write(self.fd, data.as_ptr() as *const c_void, data.len() as u64) } == -1 {
+            panic!("There was an error writing to the PTY");
         }
-    } else if(nread == 0) {
-        return -1;  // the connection ended
     }
 
-    return nread;
-}
-*/
 }
 
+
+/*
+        let buf = [c as c_char; 1];
+        match unsafe { write(self.fd, buf.as_ptr() as *const c_void, 1) } {
+            -1...0 => Err(TerminalError::Unexpected(Error::last_os_error())),
+            1 => Ok(()),
+            _ => unreachable!(),
+        }
+*/
+/*
+    if(write(fd, data, n) == -1) {
+        perror("write");
+        throw PluginException("There was an error writing to the PTY");
+    }
+*/
 
 /*
 impl Plugin for PTY {
@@ -183,9 +182,12 @@ mod tests {
 
     #[test]
     fn test_pty() {
+        // open conection
         let mut data: Vec<u8> = Vec::new();
         env::set_var("PS1", "abcde");
-        let p = PTY::new(Some("/bin/sh"));
+        let p = PTY::new(Some("/bin/sh"), false);
+
+        // read
         let mut n;
         loop {
             n = p.read(&mut data).unwrap();
@@ -193,6 +195,15 @@ mod tests {
         }
         unsafe { println!("{:?}", String::from_utf8_unchecked(data.clone())); }
         assert_eq!(data, vec![97u8, 98u8, 99u8, 100u8, 101u8]);
+
+        // write
+        data.clear();
+        p.write(&vec!['x' as u8, 'y' as u8]);
+        loop {
+            n = p.read(&mut data).unwrap();
+            if n > 0 { break; }
+        }
+        assert_eq!(data, vec!['x' as u8, 'y' as u8]);
     }
 
 }
