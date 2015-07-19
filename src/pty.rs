@@ -93,9 +93,8 @@ impl PTY {
             },
             0   => None,  // the connection ended
             n@_ => {
-                for i in 0..(n as usize) {
-                    data.push(buf[i] as u8);  // TODO - this is slow!
-                }
+                let slice = &buf[..(n as usize)];
+                data.extend(slice.iter().map(|&d| d as u8));
                 Some(n as usize)
             }
         }
