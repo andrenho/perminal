@@ -2,8 +2,10 @@
 // C stuff
 //
 extern crate libc;
-use std::ptr;
 use self::libc::*;
+use self::libc::funcs::bsd44::ioctl;
+
+use std::ptr;
 use std::ffi::CString;
 
 #[link(name = "util")]
@@ -33,10 +35,11 @@ pub struct PTY {
 
 impl PTY {
 
-    pub fn new(shell: Option<&'static str>, login: bool) -> PTY {
-        let shell = match shell {
-            Some(s) => s.to_string(),
-            None => match env::var("SHELL") {
+    pub fn new(testing: bool) -> PTY {
+        let shell = if testing {
+            "/bin/sh".to_string()
+        } else {
+            match env::var("SHELL") {
                 Ok(v)  => v,
                 Err(_) => "/bin/sh".to_string(),
             }
@@ -47,9 +50,12 @@ impl PTY {
             0  => {
                 // child
                 env::set_var("TERM", "perminal");
+                if !testing { 
+                    PTY::print_motd(); 
+                }
                 unsafe {
                     let sh = CString::new(shell.clone()).unwrap();
-                    let mut argv = vec![CString::new(if login { "" } else { "sh" }).unwrap().as_ptr()];
+                    let mut argv = vec![CString::new(if testing { "sh" } else { "" }).unwrap().as_ptr()];
                     if execv(sh.as_ptr(), argv.as_mut_ptr()) == -1 {
                         panic!("execvp");
                     }
@@ -73,10 +79,10 @@ impl PTY {
     }
 
     
-    fn read(&self, data: &mut Vec<u8>) -> Option<usize> {
-        const sz: usize = 1024 * 32;
-        let mut buf = ['\0' as c_char; sz];  // TODO - don't allocate each time
-        match unsafe { read(self.fd, buf.as_mut_ptr() as *mut c_void, sz as u64) } {
+    pub fn read(&self, data: &mut Vec<u8>) -> Option<usize> {
+        const SZ: usize = 1024 * 32;
+        let mut buf = ['\0' as c_char; SZ];  // TODO - don't allocate each time
+        match unsafe { read(self.fd, buf.as_mut_ptr() as *mut c_void, SZ as u64) } {
             -1  => { 
                 let err = Error::last_os_error();
                 match err.raw_os_error() {
@@ -96,71 +102,46 @@ impl PTY {
     }
 
 
-    fn write(&self, data: &Vec<u8>) {
+    pub fn write(&self, data: &Vec<u8>) {
         if !unsafe { write(self.fd, data.as_ptr() as *const c_void, data.len() as u64) } == -1 {
             panic!("There was an error writing to the PTY");
         }
     }
 
+
+    pub fn resize(&self, w: u16, h: u16) {
+        // ideas from <http://hermanradtke.com/2015/01/12/terminal-window-size-with-rust-ffi.html>
+        const TIOCSWINSZ : c_int = 0x5414;
+        #[repr(C)]  // TODO - packed?
+        struct winsize {
+            ws_row: c_ushort,
+            ws_col: c_ushort,
+            ws_xpixel: c_ushort,
+            ws_ypixel: c_ushort,
+        }
+        let ws = winsize { 
+            ws_row: h as c_ushort, 
+            ws_col: w as c_ushort, 
+            ws_xpixel: 0, 
+            ws_ypixel: 0 
+        };
+        if unsafe { ioctl(self.fd, TIOCSWINSZ, &ws) } < 0 {
+            panic!("Couldn't set window size!");
+        }
+    }
+
+
+    fn print_motd() {
+        println!("`perminal` aims to be a very fast, small, highly compliant and highly");
+        println!("configurable terminal emulator for various operating systems, with multiple");
+        println!("front-ends and multiple-backends.");
+        println!("");
+        println!("Right now, it is niether of these things. This is a very alpha release, so");
+        println!("DO NOT USE IN PRODUCTION ENVIRONMENTS.");
+        println!("");
+    }
+
 }
-
-
-/*
-        let buf = [c as c_char; 1];
-        match unsafe { write(self.fd, buf.as_ptr() as *const c_void, 1) } {
-            -1...0 => Err(TerminalError::Unexpected(Error::last_os_error())),
-            1 => Ok(()),
-            _ => unreachable!(),
-        }
-*/
-/*
-    if(write(fd, data, n) == -1) {
-        perror("write");
-        throw PluginException("There was an error writing to the PTY");
-    }
-*/
-
-/*
-impl Plugin for PTY {
-
-    fn get(&self) -> Result<u8, TerminalError> {
-        match unsafe {
-            let mut buf = ['\0' as c_char; 1];
-            (read(self.fd, buf.as_mut_ptr() as *mut c_void, 1), buf[0])
-        } { 
-            c @ (1,_) => Ok(c.1 as u8),
-            (0,_)     => { self.alive.set(false); Err(TerminalError::EOF) },
-            (-1,_)    => { 
-                let err = Error::last_os_error();
-                match err.raw_os_error() {
-                    Some(EAGAIN) => Err(TerminalError::NoData),
-                    Some(EIO)    => { self.alive.set(false); Err(TerminalError::EOF) },
-                    Some(_)      => Err(TerminalError::Unexpected(err)),
-                    _            => unreachable!(),
-                }
-            },
-            (_,_)     => unreachable!()
-        }
-    }
-
-
-    fn send(&self, c: u8) -> Result<(), TerminalError> {
-        let buf = [c as c_char; 1];
-        match unsafe { write(self.fd, buf.as_ptr() as *const c_void, 1) } {
-            -1...0 => Err(TerminalError::Unexpected(Error::last_os_error())),
-            1 => Ok(()),
-            _ => unreachable!(),
-        }
-    }
-
-
-    fn is_alive(&self) -> bool {
-        self.alive.get()
-    }
-    
-    fn term(&self) -> &'static str { "xterm-256color" }
-}
-*/
 
 
 impl Drop for PTY {
@@ -185,7 +166,7 @@ mod tests {
         // open conection
         let mut data: Vec<u8> = Vec::new();
         env::set_var("PS1", "abcde");
-        let p = PTY::new(Some("/bin/sh"), false);
+        let p = PTY::new(true);
 
         // read
         let mut n;
@@ -193,17 +174,22 @@ mod tests {
             n = p.read(&mut data).unwrap();
             if n > 0 { break; }
         }
-        unsafe { println!("{:?}", String::from_utf8_unchecked(data.clone())); }
+        unsafe { println!("return from `read`: {:?}", String::from_utf8_unchecked(data.clone())); }
         assert_eq!(data, vec![97u8, 98u8, 99u8, 100u8, 101u8]);
 
         // write
         data.clear();
-        p.write(&vec!['x' as u8, 'y' as u8]);
+        p.write(&"echo ".bytes().collect());
         loop {
             n = p.read(&mut data).unwrap();
             if n > 0 { break; }
         }
-        assert_eq!(data, vec!['x' as u8, 'y' as u8]);
+        unsafe { println!("return from `read`: {:?}", String::from_utf8_unchecked(data.clone())); }
+        assert_eq!(data, "echo ".bytes().collect::<Vec<u8>>());
+
+        // resize
+        data.clear();
+        p.resize(10, 10);
     }
 
 }
