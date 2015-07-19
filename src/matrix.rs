@@ -7,6 +7,7 @@ use chardecoder::*;
 //
 // MATRIX
 //
+#[allow(dead_code)]
 struct ScrollRegion {
     top: usize,
     bottom: usize,

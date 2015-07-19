@@ -1,4 +1,4 @@
-#[derive(Clone,Copy,PartialEq,Eq,Hash)]
+#[derive(Clone,Copy,Debug,PartialEq,Eq,Hash)]
 pub struct Color {
     pub r: u8,
     pub g: u8,
@@ -17,6 +17,7 @@ pub struct Attributes {
     pub invisible: bool,
     pub protected: bool,
     pub acs: bool,
+    pub italic: bool,
     pub fg_color: Color,
     pub bg_color: Color,
 }
@@ -33,6 +34,7 @@ impl Default for Attributes {
             invisible: false,
             protected: false,
             acs: false,
+            italic: false,
 	        fg_color: Color { r:0, g:0, b:0 },
 	        bg_color: Color { r:255, g:255, b:255 },
         }
