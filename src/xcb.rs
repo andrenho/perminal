@@ -51,7 +51,7 @@ impl Connection {
         }
     }
 
-    fn create_simple_window(&self, w: u16, h: u16, border: u16, values: Vec<(u32, u32)>) -> Self {
+    fn create_simple_window(&self, w: u16, h: u16, border: u16, values: Vec<(u32, u32)>) -> Window {
         let w = Window { id: unsafe { xcb_generate_id(self.conn) } };
     //fn xcb_create_window(conn: *mut c_void, depth: u8, wid: xcb_window_t, parent: xcb_window_t,
     //                     x: i16, y: i16, w: u16, h: u16, border: u16, _class: u16, visual: xcb_visualid_t,
