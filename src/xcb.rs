@@ -1,16 +1,19 @@
 #![allow(non_camel_case_types)]
+#![allow(dead_code)]
 
 extern crate libc;
 use self::libc::*;
 use std::ptr;
+use std::ffi::CString;
 
 //
 // XCB
 //
-type xcb_connection_t = *mut c_void;
+pub type xcb_connection_t = *mut c_void;
 type xcb_window_t = u32;
 type xcb_visualid_t = u32;
 type xcb_colormap_t = u32;
+type xcb_atom_t = u32;
 
 #[repr(C)]
 struct xcb_void_cookie_t {
@@ -38,6 +41,15 @@ struct xcb_screen_t {
 }
 
 #[repr(C)]
+struct xcb_generic_event_t {
+    response_type: u8,
+    pad0:          u8,
+    sequence:      u16,
+    pad:           [u32; 7],
+    full_sequence: u32,
+}
+
+#[repr(C)]
 struct xcb_screen_iterator_t {
     data:   *const xcb_screen_t,
     rem:    c_int,
@@ -51,14 +63,21 @@ extern {
 
     fn xcb_generate_id(conn: xcb_connection_t) -> u32;
 
+    fn xcb_wait_for_event(conn: xcb_connection_t) -> *mut xcb_generic_event_t;
+    fn xcb_poll_for_event(conn: xcb_connection_t) -> *mut xcb_generic_event_t;
+    fn xcb_flush(conn: *mut c_void) -> c_int;
+
     fn xcb_get_setup(conn: xcb_connection_t) -> *mut c_void;
     fn xcb_setup_roots_iterator(setup: *mut c_void) -> xcb_screen_iterator_t;
     fn xcb_screen_next(i: *mut xcb_screen_iterator_t) -> c_void;
 
-    fn xcb_create_window(conn: *mut c_void, depth: u8, wid: xcb_window_t, parent: xcb_window_t,
+    fn xcb_create_window(conn: xcb_connection_t, depth: u8, wid: xcb_window_t, parent: xcb_window_t,
                          x: i16, y: i16, w: u16, h: u16, border: u16, _class: u16, visual: xcb_visualid_t,
                          value_mask: u32, value_list: *const u32) -> xcb_void_cookie_t;
     fn xcb_map_window(conn: *mut c_void, wid: xcb_window_t) -> xcb_void_cookie_t;
+
+    fn xcb_change_property(conn: xcb_connection_t, mode: u8, win: xcb_window_t, property: xcb_atom_t,
+                           tp: xcb_atom_t, format: u8, data_len: u32, data: *const c_void) -> xcb_void_cookie_t;
 }
 
 // 
@@ -95,7 +114,7 @@ const XCB_EVENT_MASK_OWNER_GRAB_BUTTON : u32 = 1677721;
 // CONNECTION
 //
 pub struct Connection {
-    conn: xcb_connection_t,
+    pub conn: xcb_connection_t,
     default_screen: c_int,
     screen: *const xcb_screen_t,
 }
@@ -108,7 +127,7 @@ impl Connection {
 
     pub fn connect() -> Result<Self, &'static str> {
         // open connection
-        let mut default_screen: c_int = 0;
+        let default_screen: c_int = 0;
         let conn = unsafe { xcb_connect(ptr::null(), &default_screen) };
         if conn.is_null() {
             Err("Unable to connect to display")
@@ -125,6 +144,11 @@ impl Connection {
         const XCB_WINDOW_CLASS_INPUT_OUTPUT: u16 = 0;
         const XCB_CW_BACK_PIXEL: u32 = 2;
         const XCB_CW_EVENT_MASK: u32 = 2048;
+        const XCB_MAP_NOTIFY: u8 = 19;
+        const XCB_PROP_MODE_REPLACE: u8 = 0;
+        const XCB_ATOM_STRING: u32 = 31;
+        const XCB_ATOM_WM_NAME: u32 = 39;
+        const XCB_ATOM_WM_ICON_NAME: u32 = 37;
 
         let mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
         let values = [ unsafe { (*self.screen).white_pixel }, 
@@ -134,6 +158,7 @@ impl Connection {
         
         let win = Window { id: unsafe { xcb_generate_id(self.conn) } };
         unsafe { 
+            // create window
             xcb_create_window(self.conn, 
                               XCB_COPY_FROM_PARENT, 
                               win.id, 
@@ -142,9 +167,28 @@ impl Connection {
                               XCB_WINDOW_CLASS_INPUT_OUTPUT, 
                               (*self.screen).root_visual,
                               mask, values.as_ptr());
-        }
 
-        // TODO add window title
+            // TODO add window title
+            let wname = CString::new(window).unwrap();
+            xcb_change_property(self.conn, XCB_PROP_MODE_REPLACE, win.id, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8,
+                    wname.to_bytes().len() as u32, wname.as_ptr() as *const c_void);
+            xcb_change_property(self.conn, XCB_PROP_MODE_REPLACE, win.id, XCB_ATOM_WM_ICON_NAME, XCB_ATOM_STRING, 8,
+                    wname.to_bytes().len() as u32, wname.as_ptr() as *const c_void);
+
+            // map window
+            xcb_map_window(self.conn, win.id);
+            xcb_flush(self.conn);
+
+            // wait for window mapping
+            loop {
+                let e = xcb_wait_for_event(self.conn);
+                let found = ((*e).response_type & !0x80) != XCB_MAP_NOTIFY;
+                free(e as *mut c_void);
+                if found {
+                    break;
+                }
+            }
+        }
 
         win
     }
@@ -181,10 +225,6 @@ impl Drop for Connection {
 mod tests {
 
     use super::Connection;
-
-    // 
-    // TEST COMMANDS
-    //
 
     #[test] 
     fn open_connection() {
