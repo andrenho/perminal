@@ -10,7 +10,8 @@ use std::ffi::CString;
 
 #[link(name = "util")]
 extern {
-    fn forkpty(amaster: *mut c_int, name: *const c_int, x: *const c_int, y: *const c_int) -> pid_t;
+    fn forkpty(amaster: *mut c_int, name: *const c_char, x: *const c_void, y: *const c_void) -> pid_t;
+    fn execlp(file: *const c_char, args: *const c_char, ...) -> c_int;
 }
 fn my_forkpty() -> (pid_t, c_int) {
     unsafe { 
@@ -54,10 +55,10 @@ impl PTY {
                     PTY::print_motd(); 
                 }
                 unsafe {
-                    let sh = CString::new(shell.clone()).unwrap();
-                    let mut argv = vec![CString::new(if testing { "sh" } else { "" }).unwrap().as_ptr()];
-                    if execv(sh.as_ptr(), argv.as_mut_ptr()) == -1 {
-                        panic!("execvp");
+                    let sh = CString::new(shell).unwrap();
+                    let arg1 = CString::new(if testing { "sh" } else { "" }).unwrap();
+                    if execlp(sh.as_ptr(), arg1.as_ptr(), ptr::null::<*const c_char>()) == -1 {
+                        panic!("execv");
                     }
                 }
             },
@@ -82,7 +83,7 @@ impl PTY {
     pub fn read(&self, data: &mut Vec<u8>) -> Option<usize> {
         const SZ: usize = 1024 * 32;
         let mut buf = ['\0' as c_char; SZ];  // TODO - don't allocate each time
-        match unsafe { read(self.fd, buf.as_mut_ptr() as *mut c_void, SZ as u64) } {
+        match unsafe { read(self.fd, buf.as_mut_ptr() as *mut c_void, SZ as c_ulong) } {
             -1  => { 
                 let err = Error::last_os_error();
                 match err.raw_os_error() {
@@ -102,7 +103,7 @@ impl PTY {
 
 
     pub fn write(&self, data: &Vec<u8>) {
-        if !unsafe { write(self.fd, data.as_ptr() as *const c_void, data.len() as u64) } == -1 {
+        if !unsafe { write(self.fd, data.as_ptr() as *const c_void, data.len() as c_ulong) } == -1 {
             panic!("There was an error writing to the PTY");
         }
     }
@@ -110,7 +111,7 @@ impl PTY {
 
     pub fn resize(&self, w: u16, h: u16) {
         // ideas from <http://hermanradtke.com/2015/01/12/terminal-window-size-with-rust-ffi.html>
-        const TIOCSWINSZ : c_int = 0x5414;
+        const TIOCSWINSZ : c_ulong = 0x5414;
         #[repr(C)]  // TODO - packed?
         struct winsize {
             ws_row: c_ushort,
@@ -178,13 +179,13 @@ mod tests {
 
         // write
         data.clear();
-        p.write(&"echo ".bytes().collect());
+        p.write(&"a".bytes().collect());
         loop {
             n = p.read(&mut data).unwrap();
             if n > 0 { break; }
         }
         unsafe { println!("return from `read`: {:?}", String::from_utf8_unchecked(data.clone())); }
-        assert_eq!(data, "echo ".bytes().collect::<Vec<u8>>());
+        assert_eq!(data, "a".bytes().collect::<Vec<u8>>());
 
         // resize
         data.clear();
