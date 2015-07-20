@@ -15,6 +15,21 @@ struct xcb_void_cookie_t {
     sequence: c_uint,
 }
 
+/*
+              xcb_screen_t *screen_of_display (xcb_connection_t *c,
+                                               int               screen)
+              {
+                xcb_screen_iterator_t iter;
+
+                iter = xcb_setup_roots_iterator (xcb_get_setup (c));
+                for (; iter.rem; --screen, xcb_screen_next (&iter))
+                  if (screen == 0)
+                    return iter.data;
+
+                return NULL;
+              }
+*/
+
 #[link(name = "xcb")]
 extern {
     fn xcb_connect(display: *const c_char, screen: *const c_int) -> *mut c_void;
